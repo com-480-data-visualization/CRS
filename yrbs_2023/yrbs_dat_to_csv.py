@@ -15,6 +15,7 @@ FORMAT_BLOCK_RE = re.compile(r'^value\s+(\$?\w+)\s*$', re.IGNORECASE)
 FORMAT_ASSIGNMENT_RE = re.compile(r"([A-Za-z][A-Za-z0-9_]*)\s+([\$A-Za-z0-9]+)\.")
 FORMAT_VALUE_RE = re.compile(r'^"((?:[^"]|"")*)"\s*=\s*"((?:[^"]|"")*)"\s*$')
 FORMAT_OTHER_RE = re.compile(r'^other\s*=\s*"((?:[^"]|"")*)"\s*$', re.IGNORECASE)
+VARIABLE_LABEL_RE = re.compile(r'^(\w+)="((?:[^"]|"")*)"$')
 
 
 @dataclass(frozen=True)
@@ -39,27 +40,32 @@ class ValueFormat:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Convert YRBS fixed-width DAT data to a readable CSV using SAS layout files."
+        description="Convert YRBS fixed-width DAT data into raw and readable CSV exports."
     )
     parser.add_argument("--dat", required=True, type=Path, help="Path to the fixed-width .dat file.")
     parser.add_argument(
         "--input-sas",
         required=True,
         type=Path,
-        help="Path to the SAS input program that defines field positions.",
+        help="Path to the SAS input program that defines field positions and variable labels.",
     )
     parser.add_argument(
         "--formats-sas",
         required=True,
         type=Path,
-        help="Path to the SAS formats program that defines categorical labels.",
+        help="Path to the SAS formats program that defines categorical value labels.",
     )
-    parser.add_argument("--output", required=True, type=Path, help="Path to the output CSV.")
+    parser.add_argument("--output", required=True, type=Path, help="Path to the raw data CSV.")
     parser.add_argument(
-        "--decode-mode",
-        default="both",
-        choices=("both", "raw", "labels"),
-        help="Output raw values only, decoded labels only, or both (default: both).",
+        "--readable-output",
+        required=True,
+        type=Path,
+        help="Path to the readable CSV with decoded label columns.",
+    )
+    parser.add_argument(
+        "--labels-output",
+        type=Path,
+        help="Optional path to the long-form value-label lookup CSV.",
     )
     return parser.parse_args()
 
@@ -210,6 +216,35 @@ def parse_format_assignments(path: Path, available_formats: set[str]) -> dict[st
     return assignments
 
 
+def parse_variable_labels(path: Path) -> dict[str, str]:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    in_block = False
+    labels: dict[str, str] = {}
+
+    for raw_line in lines:
+        stripped = raw_line.strip()
+        if not in_block:
+            if stripped.lower() == "label":
+                in_block = True
+            continue
+
+        if stripped == ";":
+            break
+        if not stripped:
+            continue
+
+        match = VARIABLE_LABEL_RE.match(stripped)
+        if match is None:
+            raise ValueError(f"Malformed variable label line in {path}: {raw_line.rstrip()}")
+
+        labels[match.group(1).upper()] = unescape_sas_text(match.group(2))
+
+    if not labels:
+        raise ValueError(f"Could not find a variable label block in {path}")
+
+    return labels
+
+
 def parse_numeric_value(raw_value: str, decimals: int, field_name: str, line_number: int) -> str:
     stripped = raw_value.strip()
     if not stripped or stripped == ".":
@@ -248,86 +283,82 @@ def parse_raw_value(record: str, field: FieldSpec, line_number: int) -> str:
     return parse_numeric_value(raw_value, field.decimals, field.name, line_number)
 
 
-def decode_value(raw_value: str, value_format: ValueFormat) -> str:
-    if raw_value == "":
-        return ""
-    if raw_value in value_format.values:
-        return value_format.values[raw_value]
-    return value_format.other or ""
+def build_raw_header(fields: list[FieldSpec]) -> list[str]:
+    return [field.name for field in fields]
 
 
-def build_header(
+def build_raw_row(record: str, fields: list[FieldSpec], line_number: int) -> list[str]:
+    return [parse_raw_value(record, field, line_number) for field in fields]
+
+
+def build_readable_header(
     fields: list[FieldSpec],
     format_assignments: dict[str, str],
-    decode_mode: str,
 ) -> list[str]:
-    headers: list[str] = []
-
+    header: list[str] = []
     for field in fields:
-        has_label = field.name in format_assignments
-        if decode_mode == "raw":
-            headers.append(field.name)
-            continue
-
-        if decode_mode == "labels":
-            headers.append(field.name)
-            continue
-
-        headers.append(field.name)
-        if has_label:
-            headers.append(f"{field.name}_label")
-
-    return headers
+        header.append(field.name)
+        if field.name in format_assignments:
+            header.append(f"{field.name}_label")
+    return header
 
 
-def build_row(
+def build_readable_row(
     record: str,
     fields: list[FieldSpec],
     line_number: int,
-    decode_mode: str,
     format_assignments: dict[str, str],
     formats: dict[str, ValueFormat],
 ) -> list[str]:
     row: list[str] = []
     for field in fields:
         raw_value = parse_raw_value(record, field, line_number)
-        format_name = format_assignments.get(field.name)
-        label_value = decode_value(raw_value, formats[format_name]) if format_name else ""
-
-        if decode_mode == "raw":
-            row.append(raw_value)
-            continue
-
-        if decode_mode == "labels":
-            row.append(label_value if format_name else raw_value)
-            continue
-
         row.append(raw_value)
+        format_name = format_assignments.get(field.name)
         if format_name:
-            row.append(label_value)
-
+            value_label = formats[format_name].values.get(raw_value, "")
+            row.append(value_label)
     return row
 
 
-def convert_dat_to_csv(
-    dat_path: Path,
-    input_sas_path: Path,
-    formats_sas_path: Path,
-    output_path: Path,
-    decode_mode: str,
-) -> tuple[int, int, int]:
-    fields = parse_input_fields(input_sas_path)
-    formats = parse_value_formats(formats_sas_path)
-    format_assignments = parse_format_assignments(input_sas_path, set(formats))
+def write_raw_data_csv(dat_path: Path, fields: list[FieldSpec], output_path: Path) -> int:
     expected_record_length = max(field.end for field in fields)
-
     output_path.parent.mkdir(parents=True, exist_ok=True)
     row_count = 0
 
     with dat_path.open("r", encoding="utf-8", errors="replace", newline="") as dat_file:
         with output_path.open("w", encoding="utf-8", newline="") as output_file:
             writer = csv.writer(output_file)
-            writer.writerow(build_header(fields, format_assignments, decode_mode))
+            writer.writerow(build_raw_header(fields))
+
+            for line_number, raw_line in enumerate(dat_file, start=1):
+                record = raw_line.rstrip("\r\n")
+                if len(record) < expected_record_length:
+                    raise ValueError(
+                        f"Record on line {line_number} is shorter than expected "
+                        f"({len(record)} < {expected_record_length})"
+                    )
+                writer.writerow(build_raw_row(record[:expected_record_length], fields, line_number))
+                row_count += 1
+
+    return row_count
+
+
+def write_readable_data_csv(
+    dat_path: Path,
+    fields: list[FieldSpec],
+    format_assignments: dict[str, str],
+    formats: dict[str, ValueFormat],
+    output_path: Path,
+) -> int:
+    expected_record_length = max(field.end for field in fields)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    row_count = 0
+
+    with dat_path.open("r", encoding="utf-8", errors="replace", newline="") as dat_file:
+        with output_path.open("w", encoding="utf-8", newline="") as output_file:
+            writer = csv.writer(output_file)
+            writer.writerow(build_readable_header(fields, format_assignments))
 
             for line_number, raw_line in enumerate(dat_file, start=1):
                 record = raw_line.rstrip("\r\n")
@@ -337,18 +368,81 @@ def convert_dat_to_csv(
                         f"({len(record)} < {expected_record_length})"
                     )
                 writer.writerow(
-                    build_row(
+                    build_readable_row(
                         record=record[:expected_record_length],
                         fields=fields,
                         line_number=line_number,
-                        decode_mode=decode_mode,
                         format_assignments=format_assignments,
                         formats=formats,
                     )
                 )
                 row_count += 1
 
-    return row_count, len(fields), len(format_assignments)
+    return row_count
+
+
+def write_labels_lookup_csv(
+    fields: list[FieldSpec],
+    format_assignments: dict[str, str],
+    formats: dict[str, ValueFormat],
+    variable_labels: dict[str, str],
+    output_path: Path,
+) -> int:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    lookup_count = 0
+
+    with output_path.open("w", encoding="utf-8", newline="") as output_file:
+        writer = csv.writer(output_file)
+        writer.writerow(["variable", "question_label", "format_name", "raw_value", "value_label"])
+
+        for field in fields:
+            format_name = format_assignments.get(field.name)
+            if not format_name:
+                continue
+
+            question_label = variable_labels.get(field.name)
+            if question_label is None:
+                raise ValueError(f"Missing variable label for formatted field {field.name}")
+
+            for raw_value, value_label in formats[format_name].values.items():
+                writer.writerow([field.name, question_label, format_name, raw_value, value_label])
+                lookup_count += 1
+
+    return lookup_count
+
+
+def export_yrbs(
+    dat_path: Path,
+    input_sas_path: Path,
+    formats_sas_path: Path,
+    output_path: Path,
+    readable_output_path: Path,
+    labels_output_path: Path | None,
+) -> tuple[int, int, int, int, int]:
+    fields = parse_input_fields(input_sas_path)
+    formats = parse_value_formats(formats_sas_path)
+    format_assignments = parse_format_assignments(input_sas_path, set(formats))
+    variable_labels = parse_variable_labels(input_sas_path)
+
+    raw_row_count = write_raw_data_csv(dat_path, fields, output_path)
+    readable_row_count = write_readable_data_csv(
+        dat_path=dat_path,
+        fields=fields,
+        format_assignments=format_assignments,
+        formats=formats,
+        output_path=readable_output_path,
+    )
+    lookup_row_count = 0
+    if labels_output_path is not None:
+        lookup_row_count = write_labels_lookup_csv(
+            fields=fields,
+            format_assignments=format_assignments,
+            formats=formats,
+            variable_labels=variable_labels,
+            output_path=labels_output_path,
+        )
+
+    return raw_row_count, readable_row_count, len(fields), len(format_assignments), lookup_row_count
 
 
 def main() -> int:
@@ -358,22 +452,35 @@ def main() -> int:
         dat_path = require_file(args.dat, "DAT input")
         input_sas_path = require_file(args.input_sas, "SAS input program")
         formats_sas_path = require_file(args.formats_sas, "SAS formats program")
-        row_count, field_count, decode_count = convert_dat_to_csv(
+        output_paths = [args.output.resolve(), args.readable_output.resolve()]
+        if args.labels_output is not None:
+            output_paths.append(args.labels_output.resolve())
+        if len(output_paths) != len(set(output_paths)):
+            raise ValueError("Output paths must all be different files")
+
+        raw_row_count, readable_row_count, field_count, formatted_field_count, lookup_row_count = export_yrbs(
             dat_path=dat_path,
             input_sas_path=input_sas_path,
             formats_sas_path=formats_sas_path,
             output_path=args.output,
-            decode_mode=args.decode_mode,
+            readable_output_path=args.readable_output,
+            labels_output_path=args.labels_output,
         )
     except (FileNotFoundError, OSError, ValueError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 
     print(
-        f"Wrote {row_count} rows with {field_count} fields "
-        f"and {decode_count} decoded columns to {args.output}",
+        f"Wrote {raw_row_count} raw rows to {args.output} and "
+        f"{readable_row_count} readable rows across {field_count} fields to {args.readable_output}",
         file=sys.stderr,
     )
+    if args.labels_output is not None:
+        print(
+            f"Wrote {lookup_row_count} lookup rows for {formatted_field_count} formatted fields "
+            f"to {args.labels_output}",
+            file=sys.stderr,
+        )
     return 0
 
 

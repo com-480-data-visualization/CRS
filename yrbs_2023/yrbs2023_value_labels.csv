@@ -1,0 +1,666 @@
+variable,question_label,format_name,raw_value,value_label
+Q1,How old are you,$H1S, ,Missing
+Q1,How old are you,$H1S,1,12 years old or younger
+Q1,How old are you,$H1S,2,13 years old
+Q1,How old are you,$H1S,3,14 years old
+Q1,How old are you,$H1S,4,15 years old
+Q1,How old are you,$H1S,5,16 years old
+Q1,How old are you,$H1S,6,17 years old
+Q1,How old are you,$H1S,7,18 years old or older
+Q2,What is your sex,$H2S, ,Missing
+Q2,What is your sex,$H2S,1,Female
+Q2,What is your sex,$H2S,2,Male
+Q3,In what grade are you,$H3S, ,Missing
+Q3,In what grade are you,$H3S,1,9th grade
+Q3,In what grade are you,$H3S,2,10th grade
+Q3,In what grade are you,$H3S,3,11th grade
+Q3,In what grade are you,$H3S,4,12th grade
+Q3,In what grade are you,$H3S,5,Ungraded or other grade
+Q4,Are you Hispanic/Latino,$H4S, ,Missing
+Q4,Are you Hispanic/Latino,$H4S,1,Yes
+Q4,Are you Hispanic/Latino,$H4S,2,No
+Q8,Seat belt use,$H8S, ,Missing
+Q8,Seat belt use,$H8S,1,Never
+Q8,Seat belt use,$H8S,2,Rarely
+Q8,Seat belt use,$H8S,3,Sometimes
+Q8,Seat belt use,$H8S,4,Most of the time
+Q8,Seat belt use,$H8S,5,Always
+Q9,Riding with a drinking driver,$H9S, ,Missing
+Q9,Riding with a drinking driver,$H9S,1,0 times
+Q9,Riding with a drinking driver,$H9S,2,1 time
+Q9,Riding with a drinking driver,$H9S,3,2 or 3 times
+Q9,Riding with a drinking driver,$H9S,4,4 or 5 times
+Q9,Riding with a drinking driver,$H9S,5,6 or more times
+Q10,Drinking and driving,$H10S, ,Missing
+Q10,Drinking and driving,$H10S,1,Did not drive
+Q10,Drinking and driving,$H10S,2,Did not drive when drinking
+Q10,Drinking and driving,$H10S,3,1 time
+Q10,Drinking and driving,$H10S,4,2 or 3 times
+Q10,Drinking and driving,$H10S,5,4 or 5 times
+Q10,Drinking and driving,$H10S,6,6 or more times
+Q11,Texting and driving,$H11S, ,Missing
+Q11,Texting and driving,$H11S,1,Did not drive
+Q11,Texting and driving,$H11S,2,Did not text while driving
+Q11,Texting and driving,$H11S,3,1 or 2 days
+Q11,Texting and driving,$H11S,4,3 to 5 days
+Q11,Texting and driving,$H11S,5,6 to 9 days
+Q11,Texting and driving,$H11S,6,10 to 19 days
+Q11,Texting and driving,$H11S,7,20 to 29 days
+Q11,Texting and driving,$H11S,8,All 30 days
+Q12,Weapon carrying at school,$H12S, ,Missing
+Q12,Weapon carrying at school,$H12S,1,0 days
+Q12,Weapon carrying at school,$H12S,2,1 day
+Q12,Weapon carrying at school,$H12S,3,2 or 3 days
+Q12,Weapon carrying at school,$H12S,4,4 or 5 days
+Q12,Weapon carrying at school,$H12S,5,6 or more days
+Q13,Gun carrying,$H13S, ,Missing
+Q13,Gun carrying,$H13S,1,0 days
+Q13,Gun carrying,$H13S,2,1 day
+Q13,Gun carrying,$H13S,3,2 or 3 days
+Q13,Gun carrying,$H13S,4,4 or 5 days
+Q13,Gun carrying,$H13S,5,6 or more days
+Q14,Safety concerns at school,$H14S, ,Missing
+Q14,Safety concerns at school,$H14S,1,0 days
+Q14,Safety concerns at school,$H14S,2,1 day
+Q14,Safety concerns at school,$H14S,3,2 or 3 days
+Q14,Safety concerns at school,$H14S,4,4 or 5 days
+Q14,Safety concerns at school,$H14S,5,6 or more days
+Q15,Threatened at school,$H15S, ,Missing
+Q15,Threatened at school,$H15S,1,0 times
+Q15,Threatened at school,$H15S,2,1 time
+Q15,Threatened at school,$H15S,3,2 or 3 times
+Q15,Threatened at school,$H15S,4,4 or 5 times
+Q15,Threatened at school,$H15S,5,6 or 7 times
+Q15,Threatened at school,$H15S,6,8 or 9 times
+Q15,Threatened at school,$H15S,7,10 or 11 times
+Q15,Threatened at school,$H15S,8,12 or more times
+Q16,Times in fight past 12 months,$H16S, ,Missing
+Q16,Times in fight past 12 months,$H16S,1,0 times
+Q16,Times in fight past 12 months,$H16S,2,1 time
+Q16,Times in fight past 12 months,$H16S,3,2 or 3 times
+Q16,Times in fight past 12 months,$H16S,4,4 or 5 times
+Q16,Times in fight past 12 months,$H16S,5,6 or 7 times
+Q16,Times in fight past 12 months,$H16S,6,8 or 9 times
+Q16,Times in fight past 12 months,$H16S,7,10 or 11 times
+Q16,Times in fight past 12 months,$H16S,8,12 or more times
+Q17,Physical fighting at school,$H17S, ,Missing
+Q17,Physical fighting at school,$H17S,1,0 times
+Q17,Physical fighting at school,$H17S,2,1 time
+Q17,Physical fighting at school,$H17S,3,2 or 3 times
+Q17,Physical fighting at school,$H17S,4,4 or 5 times
+Q17,Physical fighting at school,$H17S,5,6 or 7 times
+Q17,Physical fighting at school,$H17S,6,8 or 9 times
+Q17,Physical fighting at school,$H17S,7,10 or 11 times
+Q17,Physical fighting at school,$H17S,8,12 or more times
+Q18,Saw physical violence in neighborhood,$H18S, ,Missing
+Q18,Saw physical violence in neighborhood,$H18S,1,Yes
+Q18,Saw physical violence in neighborhood,$H18S,2,No
+Q19,Ever been physically forced sexual intercourse,$H19S, ,Missing
+Q19,Ever been physically forced sexual intercourse,$H19S,1,Yes
+Q19,Ever been physically forced sexual intercourse,$H19S,2,No
+Q20,Sexual violence,$H20S, ,Missing
+Q20,Sexual violence,$H20S,1,0 times
+Q20,Sexual violence,$H20S,2,1 time
+Q20,Sexual violence,$H20S,3,2 or 3 times
+Q20,Sexual violence,$H20S,4,4 or 5 times
+Q20,Sexual violence,$H20S,5,6 or more times
+Q21,Sexual dating violence,$H21S, ,Missing
+Q21,Sexual dating violence,$H21S,1,Did not date
+Q21,Sexual dating violence,$H21S,2,0 times
+Q21,Sexual dating violence,$H21S,3,1 time
+Q21,Sexual dating violence,$H21S,4,2 or 3 times
+Q21,Sexual dating violence,$H21S,5,4 or 5 times
+Q21,Sexual dating violence,$H21S,6,6 or more times
+Q22,Physical dating violence,$H22S, ,Missing
+Q22,Physical dating violence,$H22S,1,Did not date
+Q22,Physical dating violence,$H22S,2,0 times
+Q22,Physical dating violence,$H22S,3,1 time
+Q22,Physical dating violence,$H22S,4,2 or 3 times
+Q22,Physical dating violence,$H22S,5,4 or 5 times
+Q22,Physical dating violence,$H22S,6,6 or more times
+Q23,treated unfairly in school b/c race/ethnicity,$H23S, ,Missing
+Q23,treated unfairly in school b/c race/ethnicity,$H23S,1,Never
+Q23,treated unfairly in school b/c race/ethnicity,$H23S,2,Rarely
+Q23,treated unfairly in school b/c race/ethnicity,$H23S,3,Sometimes
+Q23,treated unfairly in school b/c race/ethnicity,$H23S,4,Most of the time
+Q23,treated unfairly in school b/c race/ethnicity,$H23S,5,Always
+Q24,Bullied at school,$H24S, ,Missing
+Q24,Bullied at school,$H24S,1,Yes
+Q24,Bullied at school,$H24S,2,No
+Q25,Electronic bullying,$H25S, ,Missing
+Q25,Electronic bullying,$H25S,1,Yes
+Q25,Electronic bullying,$H25S,2,No
+Q26,Sad or hopeless,$H26S, ,Missing
+Q26,Sad or hopeless,$H26S,1,Yes
+Q26,Sad or hopeless,$H26S,2,No
+Q27,Considered suicide,$H27S, ,Missing
+Q27,Considered suicide,$H27S,1,Yes
+Q27,Considered suicide,$H27S,2,No
+Q28,Made a suicide plan past 12 months,$H28S, ,Missing
+Q28,Made a suicide plan past 12 months,$H28S,1,Yes
+Q28,Made a suicide plan past 12 months,$H28S,2,No
+Q29,Actually attempted suicide,$H29S, ,Missing
+Q29,Actually attempted suicide,$H29S,1,0 times
+Q29,Actually attempted suicide,$H29S,2,1 time
+Q29,Actually attempted suicide,$H29S,3,2 or 3 times
+Q29,Actually attempted suicide,$H29S,4,4 or 5 times
+Q29,Actually attempted suicide,$H29S,5,6 or more times
+Q30,Injurious suicide attempt,$H30S, ,Missing
+Q30,Injurious suicide attempt,$H30S,1,Did not attempt suicide
+Q30,Injurious suicide attempt,$H30S,2,Yes
+Q30,Injurious suicide attempt,$H30S,3,No
+Q31,Ever cigarette use,$H31S, ,Missing
+Q31,Ever cigarette use,$H31S,1,Yes
+Q31,Ever cigarette use,$H31S,2,No
+Q32,Initiation of cigarette smoking,$H32S, ,Missing
+Q32,Initiation of cigarette smoking,$H32S,1,Never smoked a cigarette
+Q32,Initiation of cigarette smoking,$H32S,2,8 years old or younger
+Q32,Initiation of cigarette smoking,$H32S,3,9 or 10 years old
+Q32,Initiation of cigarette smoking,$H32S,4,11 or 12 years old
+Q32,Initiation of cigarette smoking,$H32S,5,13 or 14 years old
+Q32,Initiation of cigarette smoking,$H32S,6,15 or 16 years old
+Q32,Initiation of cigarette smoking,$H32S,7,17 years old or older
+Q33,Current cigarette use,$H33S, ,Missing
+Q33,Current cigarette use,$H33S,1,0 days
+Q33,Current cigarette use,$H33S,2,1 or 2 days
+Q33,Current cigarette use,$H33S,3,3 to 5 days
+Q33,Current cigarette use,$H33S,4,6 to 9 days
+Q33,Current cigarette use,$H33S,5,10 to 19 days
+Q33,Current cigarette use,$H33S,6,20 to 29 days
+Q33,Current cigarette use,$H33S,7,All 30 days
+Q34,Smoked >10 cigarettes,$H34S, ,Missing
+Q34,Smoked >10 cigarettes,$H34S,1,Did not smoke cigarettes
+Q34,Smoked >10 cigarettes,$H34S,2,Less than 1 cigarette
+Q34,Smoked >10 cigarettes,$H34S,3,1 cigarette
+Q34,Smoked >10 cigarettes,$H34S,4,2 to 5 cigarettes
+Q34,Smoked >10 cigarettes,$H34S,5,6 to 10 cigarettes
+Q34,Smoked >10 cigarettes,$H34S,6,11 to 20 cigarettes
+Q34,Smoked >10 cigarettes,$H34S,7,More than 20 cigarettes
+Q35,Electronic vapor product use,$H35S, ,Missing
+Q35,Electronic vapor product use,$H35S,1,Yes
+Q35,Electronic vapor product use,$H35S,2,No
+Q36,Current electronic vapor product use,$H36S, ,Missing
+Q36,Current electronic vapor product use,$H36S,1,0 days
+Q36,Current electronic vapor product use,$H36S,2,1 or 2 days
+Q36,Current electronic vapor product use,$H36S,3,3 to 5 days
+Q36,Current electronic vapor product use,$H36S,4,6 to 9 days
+Q36,Current electronic vapor product use,$H36S,5,10 to 19 days
+Q36,Current electronic vapor product use,$H36S,6,20 to 29 days
+Q36,Current electronic vapor product use,$H36S,7,All 30 days
+Q37,EVP from store,$H37S, ,Missing
+Q37,EVP from store,$H37S,1,Did not use EVP
+Q37,EVP from store,$H37S,2,Friend or family
+Q37,EVP from store,$H37S,3,Vape shop or tobacco shop
+Q37,EVP from store,$H37S,4,Store or gas station
+Q37,EVP from store,$H37S,5,Mall kiosk or stand
+Q37,EVP from store,$H37S,6,Internet
+Q37,EVP from store,$H37S,7,Took from a store
+Q37,EVP from store,$H37S,8,Some other way
+Q38,Current smokeless tobacco use,$H38S, ,Missing
+Q38,Current smokeless tobacco use,$H38S,1,0 days
+Q38,Current smokeless tobacco use,$H38S,2,1 or 2 days
+Q38,Current smokeless tobacco use,$H38S,3,3 to 5 days
+Q38,Current smokeless tobacco use,$H38S,4,6 to 9 days
+Q38,Current smokeless tobacco use,$H38S,5,10 to 19 days
+Q38,Current smokeless tobacco use,$H38S,6,20 to 29 days
+Q38,Current smokeless tobacco use,$H38S,7,All 30 days
+Q39,Current cigar use,$H39S, ,Missing
+Q39,Current cigar use,$H39S,1,0 days
+Q39,Current cigar use,$H39S,2,1 or 2 days
+Q39,Current cigar use,$H39S,3,3 to 5 days
+Q39,Current cigar use,$H39S,4,6 to 9 days
+Q39,Current cigar use,$H39S,5,10 to 19 days
+Q39,Current cigar use,$H39S,6,20 to 29 days
+Q39,Current cigar use,$H39S,7,All 30 days
+Q40,All tobacco product cessation,$H40S, ,Missing
+Q40,All tobacco product cessation,$H40S,1,Did not use tobacco products
+Q40,All tobacco product cessation,$H40S,2,Yes
+Q40,All tobacco product cessation,$H40S,3,No
+Q41,Initiation of alcohol use,$H41S, ,Missing
+Q41,Initiation of alcohol use,$H41S,1,Never drank alcohol
+Q41,Initiation of alcohol use,$H41S,2,8 years old or younger
+Q41,Initiation of alcohol use,$H41S,3,9 or 10 years old
+Q41,Initiation of alcohol use,$H41S,4,11 or 12 years old
+Q41,Initiation of alcohol use,$H41S,5,13 or 14 years old
+Q41,Initiation of alcohol use,$H41S,6,15 or 16 years old
+Q41,Initiation of alcohol use,$H41S,7,17 years old or older
+Q42,Current alcohol use,$H42S, ,Missing
+Q42,Current alcohol use,$H42S,1,0 days
+Q42,Current alcohol use,$H42S,2,1 or 2 days
+Q42,Current alcohol use,$H42S,3,3 to 5 days
+Q42,Current alcohol use,$H42S,4,6 to 9 days
+Q42,Current alcohol use,$H42S,5,10 to 19 days
+Q42,Current alcohol use,$H42S,6,20 to 29 days
+Q42,Current alcohol use,$H42S,7,All 30 days
+Q43,Current binge drinking,$H43S, ,Missing
+Q43,Current binge drinking,$H43S,1,0 days
+Q43,Current binge drinking,$H43S,2,1 day
+Q43,Current binge drinking,$H43S,3,2 days
+Q43,Current binge drinking,$H43S,4,3 to 5 days
+Q43,Current binge drinking,$H43S,5,6 to 9 days
+Q43,Current binge drinking,$H43S,6,10 to 19 days
+Q43,Current binge drinking,$H43S,7,20 or more days
+Q44,Drinks in a row past 30 days,$H44S, ,Missing
+Q44,Drinks in a row past 30 days,$H44S,1,Did not drink in past 30 days
+Q44,Drinks in a row past 30 days,$H44S,2,1 or 2 drinks
+Q44,Drinks in a row past 30 days,$H44S,3,3 drinks
+Q44,Drinks in a row past 30 days,$H44S,4,4 drinks
+Q44,Drinks in a row past 30 days,$H44S,5,5 drinks
+Q44,Drinks in a row past 30 days,$H44S,6,6 or 7 drinks
+Q44,Drinks in a row past 30 days,$H44S,7,8 or 9 drinks
+Q44,Drinks in a row past 30 days,$H44S,8,10 or more drinks
+Q45,Source of alcohol,$H45S, ,Missing
+Q45,Source of alcohol,$H45S,1,Did not drink in past 30 days
+Q45,Source of alcohol,$H45S,2,Bought in store
+Q45,Source of alcohol,$H45S,3,Bought in restaurant
+Q45,Source of alcohol,$H45S,4,Bought at public event
+Q45,Source of alcohol,$H45S,5,I gave someone money to buy
+Q45,Source of alcohol,$H45S,6,Someone gave it to me
+Q45,Source of alcohol,$H45S,7,Took from store/family
+Q45,Source of alcohol,$H45S,8,Some other way
+Q46,Ever marijuana use,$H46S, ,Missing
+Q46,Ever marijuana use,$H46S,1,0 times
+Q46,Ever marijuana use,$H46S,2,1 or 2 times
+Q46,Ever marijuana use,$H46S,3,3 to 9 times
+Q46,Ever marijuana use,$H46S,4,10 to 19 times
+Q46,Ever marijuana use,$H46S,5,20 to 39 times
+Q46,Ever marijuana use,$H46S,6,40 to 99 times
+Q46,Ever marijuana use,$H46S,7,100 or more times
+Q47,Initiation of marijuana use,$H47S, ,Missing
+Q47,Initiation of marijuana use,$H47S,1,Never tried marijuana
+Q47,Initiation of marijuana use,$H47S,2,8 years old or younger
+Q47,Initiation of marijuana use,$H47S,3,9 or 10 years old
+Q47,Initiation of marijuana use,$H47S,4,11 or 12 years old
+Q47,Initiation of marijuana use,$H47S,5,13 or 14 years old
+Q47,Initiation of marijuana use,$H47S,6,15 or 16 years old
+Q47,Initiation of marijuana use,$H47S,7,17 years old or older
+Q48,Current marijuana use,$H48S, ,Missing
+Q48,Current marijuana use,$H48S,1,0 times
+Q48,Current marijuana use,$H48S,2,1 or 2 times
+Q48,Current marijuana use,$H48S,3,3 to 9 times
+Q48,Current marijuana use,$H48S,4,10 to 19 times
+Q48,Current marijuana use,$H48S,5,20 to 39 times
+Q48,Current marijuana use,$H48S,6,40 or more times
+Q49,Ever prescription pain medicine use,$H49S, ,Missing
+Q49,Ever prescription pain medicine use,$H49S,1,0 times
+Q49,Ever prescription pain medicine use,$H49S,2,1 or 2 times
+Q49,Ever prescription pain medicine use,$H49S,3,3 to 9 times
+Q49,Ever prescription pain medicine use,$H49S,4,10 to 19 times
+Q49,Ever prescription pain medicine use,$H49S,5,20 to 39 times
+Q49,Ever prescription pain medicine use,$H49S,6,40 or more times
+Q50,Ever cocaine use,$H50S, ,Missing
+Q50,Ever cocaine use,$H50S,1,0 times
+Q50,Ever cocaine use,$H50S,2,1 or 2 times
+Q50,Ever cocaine use,$H50S,3,3 to 9 times
+Q50,Ever cocaine use,$H50S,4,10 to 19 times
+Q50,Ever cocaine use,$H50S,5,20 to 39 times
+Q50,Ever cocaine use,$H50S,6,40 or more times
+Q51,Ever inhalant use,$H51S, ,Missing
+Q51,Ever inhalant use,$H51S,1,0 times
+Q51,Ever inhalant use,$H51S,2,1 or 2 times
+Q51,Ever inhalant use,$H51S,3,3 to 9 times
+Q51,Ever inhalant use,$H51S,4,10 to 19 times
+Q51,Ever inhalant use,$H51S,5,20 to 39 times
+Q51,Ever inhalant use,$H51S,6,40 or more times
+Q52,Ever heroin use ,$H52S, ,Missing
+Q52,Ever heroin use ,$H52S,1,0 times
+Q52,Ever heroin use ,$H52S,2,1 or 2 times
+Q52,Ever heroin use ,$H52S,3,3 to 9 times
+Q52,Ever heroin use ,$H52S,4,10 to 19 times
+Q52,Ever heroin use ,$H52S,5,20 to 39 times
+Q52,Ever heroin use ,$H52S,6,40 or more times
+Q53,Ever methamphetamine use,$H53S, ,Missing
+Q53,Ever methamphetamine use,$H53S,1,0 times
+Q53,Ever methamphetamine use,$H53S,2,1 or 2 times
+Q53,Ever methamphetamine use,$H53S,3,3 to 9 times
+Q53,Ever methamphetamine use,$H53S,4,10 to 19 times
+Q53,Ever methamphetamine use,$H53S,5,20 to 39 times
+Q53,Ever methamphetamine use,$H53S,6,40 or more times
+Q54,Ever ecstasy use,$H54S, ,Missing
+Q54,Ever ecstasy use,$H54S,1,0 times
+Q54,Ever ecstasy use,$H54S,2,1 or 2 times
+Q54,Ever ecstasy use,$H54S,3,3 to 9 times
+Q54,Ever ecstasy use,$H54S,4,10 to 19 times
+Q54,Ever ecstasy use,$H54S,5,20 to 39 times
+Q54,Ever ecstasy use,$H54S,6,40 or more times
+Q55,Illegal injected drug use,$H55S, ,Missing
+Q55,Illegal injected drug use,$H55S,1,0 times
+Q55,Illegal injected drug use,$H55S,2,1 time
+Q55,Illegal injected drug use,$H55S,3,2 or more times
+Q56,Ever sexual intercourse,$H56S, ,Missing
+Q56,Ever sexual intercourse,$H56S,1,Yes
+Q56,Ever sexual intercourse,$H56S,2,No
+Q57,Sex before 13 years,$H57S, ,Missing
+Q57,Sex before 13 years,$H57S,1,Never had sex
+Q57,Sex before 13 years,$H57S,2,11 years old or younger
+Q57,Sex before 13 years,$H57S,3,12 years old
+Q57,Sex before 13 years,$H57S,4,13 years old
+Q57,Sex before 13 years,$H57S,5,14 years old
+Q57,Sex before 13 years,$H57S,6,15 years old
+Q57,Sex before 13 years,$H57S,7,16 years old
+Q57,Sex before 13 years,$H57S,8,17 years old or older
+Q58,Number of sex partners,$H58S, ,Missing
+Q58,Number of sex partners,$H58S,1,Never had sex
+Q58,Number of sex partners,$H58S,2,1 person
+Q58,Number of sex partners,$H58S,3,2 people
+Q58,Number of sex partners,$H58S,4,3 people
+Q58,Number of sex partners,$H58S,5,4 people
+Q58,Number of sex partners,$H58S,6,5 people
+Q58,Number of sex partners,$H58S,7,6 or more people
+Q59,Current sexual activity,$H59S, ,Missing
+Q59,Current sexual activity,$H59S,1,Never had sex
+Q59,Current sexual activity,$H59S,2,None during past 3 months
+Q59,Current sexual activity,$H59S,3,1 person
+Q59,Current sexual activity,$H59S,4,2 people
+Q59,Current sexual activity,$H59S,5,3 people
+Q59,Current sexual activity,$H59S,6,4 people
+Q59,Current sexual activity,$H59S,7,5 people
+Q59,Current sexual activity,$H59S,8,6 or more people
+Q60,Alcohol/drugs and sex,$H60S, ,Missing
+Q60,Alcohol/drugs and sex,$H60S,1,Never had sex
+Q60,Alcohol/drugs and sex,$H60S,2,Yes
+Q60,Alcohol/drugs and sex,$H60S,3,No
+Q61,Condom use,$H61S, ,Missing
+Q61,Condom use,$H61S,1,Never had sex
+Q61,Condom use,$H61S,2,Yes
+Q61,Condom use,$H61S,3,No
+Q62,Birth control pill use,$H62S, ,Missing
+Q62,Birth control pill use,$H62S,1,Never had sex
+Q62,Birth control pill use,$H62S,2,No birth control
+Q62,Birth control pill use,$H62S,3,Birth control pills
+Q62,Birth control pill use,$H62S,4,Condoms
+Q62,Birth control pill use,$H62S,5,IUD or implant
+Q62,Birth control pill use,$H62S,6,Shot/patch/birth control ring
+Q62,Birth control pill use,$H62S,7,Withdrawal or something else
+Q62,Birth control pill use,$H62S,8,Not sure
+Q63,Sex of sexual contacts,$H63S, ,Missing
+Q63,Sex of sexual contacts,$H63S,1,Never had sexual contact
+Q63,Sex of sexual contacts,$H63S,2,Females
+Q63,Sex of sexual contacts,$H63S,3,Males
+Q63,Sex of sexual contacts,$H63S,4,Females and males
+Q64,Sexual identity,$H64S, ,Missing
+Q64,Sexual identity,$H64S,1,Heterosexual (straight)
+Q64,Sexual identity,$H64S,2,Gay or lesbian
+Q64,Sexual identity,$H64S,3,Bisexual
+Q64,Sexual identity,$H64S,4,Some other way
+Q64,Sexual identity,$H64S,5,Not sure
+Q64,Sexual identity,$H64S,6,Don't know what this means
+Q65,Transgender,$H65S, ,Missing
+Q65,Transgender,$H65S,1,No
+Q65,Transgender,$H65S,2,"Yes, I am transgender"
+Q65,Transgender,$H65S,3,Not sure if I am transgender
+Q65,Transgender,$H65S,4,Don't know what this means
+Q66,Perception of weight,$H66S, ,Missing
+Q66,Perception of weight,$H66S,1,Very underweight
+Q66,Perception of weight,$H66S,2,Slightly underweight
+Q66,Perception of weight,$H66S,3,About the right weight
+Q66,Perception of weight,$H66S,4,Slightly overweight
+Q66,Perception of weight,$H66S,5,Very overweight
+Q67,Weight loss,$H67S, ,Missing
+Q67,Weight loss,$H67S,1,Lose weight
+Q67,Weight loss,$H67S,2,Gain weight
+Q67,Weight loss,$H67S,3,Stay the same weight
+Q67,Weight loss,$H67S,4,Not trying to do anything
+Q68,Fruit juice drinking,$H68S, ,Missing
+Q68,Fruit juice drinking,$H68S,1,Did not drink fruit juice
+Q68,Fruit juice drinking,$H68S,2,1 to 3 times
+Q68,Fruit juice drinking,$H68S,3,4 to 6 times
+Q68,Fruit juice drinking,$H68S,4,1 time per day
+Q68,Fruit juice drinking,$H68S,5,2 times per day
+Q68,Fruit juice drinking,$H68S,6,3 times per day
+Q68,Fruit juice drinking,$H68S,7,4 or more times per day
+Q69,Fruit eating,$H69S, ,Missing
+Q69,Fruit eating,$H69S,1,Did not eat fruit
+Q69,Fruit eating,$H69S,2,1 to 3 times
+Q69,Fruit eating,$H69S,3,4 to 6 times
+Q69,Fruit eating,$H69S,4,1 time per day
+Q69,Fruit eating,$H69S,5,2 times per day
+Q69,Fruit eating,$H69S,6,3 times per day
+Q69,Fruit eating,$H69S,7,4 or more times per day
+Q70,Green salad eating,$H70S, ,Missing
+Q70,Green salad eating,$H70S,1,Did not eat green salad
+Q70,Green salad eating,$H70S,2,1 to 3 times
+Q70,Green salad eating,$H70S,3,4 to 6 times
+Q70,Green salad eating,$H70S,4,1 time per day
+Q70,Green salad eating,$H70S,5,2 times per day
+Q70,Green salad eating,$H70S,6,3 times per day
+Q70,Green salad eating,$H70S,7,4 or more times per day
+Q71,Potato eating,$H71S, ,Missing
+Q71,Potato eating,$H71S,1,Did not eat potatoes
+Q71,Potato eating,$H71S,2,1 to 3 times
+Q71,Potato eating,$H71S,3,4 to 6 times
+Q71,Potato eating,$H71S,4,1 time per day
+Q71,Potato eating,$H71S,5,2 times per day
+Q71,Potato eating,$H71S,6,3 times per day
+Q71,Potato eating,$H71S,7,4 or more times per day
+Q72,Carrot eating,$H72S, ,Missing
+Q72,Carrot eating,$H72S,1,Did not eat carrots
+Q72,Carrot eating,$H72S,2,1 to 3 times
+Q72,Carrot eating,$H72S,3,4 to 6 times
+Q72,Carrot eating,$H72S,4,1 time per day
+Q72,Carrot eating,$H72S,5,2 times per day
+Q72,Carrot eating,$H72S,6,3 times per day
+Q72,Carrot eating,$H72S,7,4 or more times per day
+Q73,Other vegetable eating,$H73S, ,Missing
+Q73,Other vegetable eating,$H73S,1,Did not eat other vegetables
+Q73,Other vegetable eating,$H73S,2,1 to 3 times
+Q73,Other vegetable eating,$H73S,3,4 to 6 times
+Q73,Other vegetable eating,$H73S,4,1 time per day
+Q73,Other vegetable eating,$H73S,5,2 times per day
+Q73,Other vegetable eating,$H73S,6,3 times per day
+Q73,Other vegetable eating,$H73S,7,4 or more times per day
+Q74,No soda drinking,$H74S, ,Missing
+Q74,No soda drinking,$H74S,1,Did not drink soda or pop
+Q74,No soda drinking,$H74S,2,1 to 3 times
+Q74,No soda drinking,$H74S,3,4 to 6 times
+Q74,No soda drinking,$H74S,4,1 time per day
+Q74,No soda drinking,$H74S,5,2 times per day
+Q74,No soda drinking,$H74S,6,3 times per day
+Q74,No soda drinking,$H74S,7,4 or more times per day
+Q75,Breakfast eating,$H75S, ,Missing
+Q75,Breakfast eating,$H75S,1,0 days
+Q75,Breakfast eating,$H75S,2,1 day
+Q75,Breakfast eating,$H75S,3,2 days
+Q75,Breakfast eating,$H75S,4,3 days
+Q75,Breakfast eating,$H75S,5,4 days
+Q75,Breakfast eating,$H75S,6,5 days
+Q75,Breakfast eating,$H75S,7,6 days
+Q75,Breakfast eating,$H75S,8,7 days
+Q76,Physical activity >= 5 days,$H76S, ,Missing
+Q76,Physical activity >= 5 days,$H76S,1,0 days
+Q76,Physical activity >= 5 days,$H76S,2,1 day
+Q76,Physical activity >= 5 days,$H76S,3,2 days
+Q76,Physical activity >= 5 days,$H76S,4,3 days
+Q76,Physical activity >= 5 days,$H76S,5,4 days
+Q76,Physical activity >= 5 days,$H76S,6,5 days
+Q76,Physical activity >= 5 days,$H76S,7,6 days
+Q76,Physical activity >= 5 days,$H76S,8,7 days
+Q77,PE attendance,$H77S, ,Missing
+Q77,PE attendance,$H77S,1,0 days
+Q77,PE attendance,$H77S,2,1 day
+Q77,PE attendance,$H77S,3,2 days
+Q77,PE attendance,$H77S,4,3 days
+Q77,PE attendance,$H77S,5,4 days
+Q77,PE attendance,$H77S,6,5 days
+Q78,Sports team participation,$H78S, ,Missing
+Q78,Sports team participation,$H78S,1,0 teams
+Q78,Sports team participation,$H78S,2,1 team
+Q78,Sports team participation,$H78S,3,2 teams
+Q78,Sports team participation,$H78S,4,3 or more teams
+Q79,Concussion,$H79S, ,Missing
+Q79,Concussion,$H79S,1,0 times
+Q79,Concussion,$H79S,2,1 time
+Q79,Concussion,$H79S,3,2 times
+Q79,Concussion,$H79S,4,3 times
+Q79,Concussion,$H79S,5,4 or more times
+Q80,Social media,$H80S, ,Missing
+Q80,Social media,$H80S,1,I do not use social media
+Q80,Social media,$H80S,2,A few times a month
+Q80,Social media,$H80S,3,About once a week
+Q80,Social media,$H80S,4,A few times a week
+Q80,Social media,$H80S,5,About once a day
+Q80,Social media,$H80S,6,Several times a day
+Q80,Social media,$H80S,7,About once an hour
+Q80,Social media,$H80S,8,More than once an hour
+Q81,HIV testing,$H81S, ,Missing
+Q81,HIV testing,$H81S,1,Yes
+Q81,HIV testing,$H81S,2,No
+Q81,HIV testing,$H81S,3,Not sure
+Q82,STD testing,$H82S, ,Missing
+Q82,STD testing,$H82S,1,Yes
+Q82,STD testing,$H82S,2,No
+Q82,STD testing,$H82S,3,Not sure
+Q83,Oral health care,$H83S, ,Missing
+Q83,Oral health care,$H83S,1,During the past 12 months
+Q83,Oral health care,$H83S,2,Between 12 and 24 months ago
+Q83,Oral health care,$H83S,3,More than 24 months ago
+Q83,Oral health care,$H83S,4,Never
+Q83,Oral health care,$H83S,5,Not sure
+Q84,Current mental health,$H84S, ,Missing
+Q84,Current mental health,$H84S,1,Never
+Q84,Current mental health,$H84S,2,Rarely
+Q84,Current mental health,$H84S,3,Sometimes
+Q84,Current mental health,$H84S,4,Most of the time
+Q84,Current mental health,$H84S,5,Always
+Q85,Hours of sleep on school night,$H85S, ,Missing
+Q85,Hours of sleep on school night,$H85S,1,4 or less hours
+Q85,Hours of sleep on school night,$H85S,2,5 hours
+Q85,Hours of sleep on school night,$H85S,3,6 hours
+Q85,Hours of sleep on school night,$H85S,4,7 hours
+Q85,Hours of sleep on school night,$H85S,5,8 hours
+Q85,Hours of sleep on school night,$H85S,6,9 hours
+Q85,Hours of sleep on school night,$H85S,7,10 or more hours
+Q86,Unstable Housing,$H86S, ,Missing
+Q86,Unstable Housing,$H86S,1,Home of parent or gaurdian
+Q86,Unstable Housing,$H86S,2,Home of other people
+Q86,Unstable Housing,$H86S,3,Shelter or emergency housing
+Q86,Unstable Housing,$H86S,4,Motel or hotel
+Q86,Unstable Housing,$H86S,5,Public place
+Q86,Unstable Housing,$H86S,6,No usual place
+Q86,Unstable Housing,$H86S,7,Somewhere else
+Q87,Grades in school,$H87S, ,Missing
+Q87,Grades in school,$H87S,1,Mostly A's
+Q87,Grades in school,$H87S,2,Mostly B's
+Q87,Grades in school,$H87S,3,Mostly C's
+Q87,Grades in school,$H87S,4,Mostly D's
+Q87,Grades in school,$H87S,5,Mostly F's
+Q87,Grades in school,$H87S,6,None of these grades
+Q87,Grades in school,$H87S,7,Not sure
+Q88,Ever sexual abuse by adult or older person ACEs,$H88XX, ,Missing
+Q88,Ever sexual abuse by adult or older person ACEs,$H88XX,1,Yes
+Q88,Ever sexual abuse by adult or older person ACEs,$H88XX,2,No
+Q89,Ever parental emotional abuse ACEs,$H89XX, ,Missing
+Q89,Ever parental emotional abuse ACEs,$H89XX,1,Never
+Q89,Ever parental emotional abuse ACEs,$H89XX,2,Rarely
+Q89,Ever parental emotional abuse ACEs,$H89XX,3,Sometimes
+Q89,Ever parental emotional abuse ACEs,$H89XX,4,Most of the time
+Q89,Ever parental emotional abuse ACEs,$H89XX,5,Always
+Q90,Ever parental physical abuse ACEs,$H90XX, ,Missing
+Q90,Ever parental physical abuse ACEs,$H90XX,1,Never
+Q90,Ever parental physical abuse ACEs,$H90XX,2,Rarely
+Q90,Ever parental physical abuse ACEs,$H90XX,3,Sometimes
+Q90,Ever parental physical abuse ACEs,$H90XX,4,Most of the time
+Q90,Ever parental physical abuse ACEs,$H90XX,5,Always
+Q91,Adults in home intimate partner violence ACEs,$H91XX, ,Missing
+Q91,Adults in home intimate partner violence ACEs,$H91XX,1,Never
+Q91,Adults in home intimate partner violence ACEs,$H91XX,2,Rarely
+Q91,Adults in home intimate partner violence ACEs,$H91XX,3,Sometimes
+Q91,Adults in home intimate partner violence ACEs,$H91XX,4,Most of the time
+Q91,Adults in home intimate partner violence ACEs,$H91XX,5,Always
+Q92,Current Rx Pain med w/out Rx,$H92XX, ,Missing
+Q92,Current Rx Pain med w/out Rx,$H92XX,1,0 times
+Q92,Current Rx Pain med w/out Rx,$H92XX,2,1 or 2 times
+Q92,Current Rx Pain med w/out Rx,$H92XX,3,3 to 9 times
+Q92,Current Rx Pain med w/out Rx,$H92XX,4,10 to 19 times
+Q92,Current Rx Pain med w/out Rx,$H92XX,5,20 to 39 times
+Q92,Current Rx Pain med w/out Rx,$H92XX,6,40 or more times
+Q93,Ever used hallucinogenic drugs,$H93XX, ,Missing
+Q93,Ever used hallucinogenic drugs,$H93XX,1,0 times
+Q93,Ever used hallucinogenic drugs,$H93XX,2,1 or 2 times
+Q93,Ever used hallucinogenic drugs,$H93XX,3,3 to 9 times
+Q93,Ever used hallucinogenic drugs,$H93XX,4,10 to 19 times
+Q93,Ever used hallucinogenic drugs,$H93XX,5,20 to 39 times
+Q93,Ever used hallucinogenic drugs,$H93XX,6,40 or more times
+Q94,If verbally asked for consent last sexual contact,$H94XX, ,Missing
+Q94,If verbally asked for consent last sexual contact,$H94XX,1,Never had sexual contact
+Q94,If verbally asked for consent last sexual contact,$H94XX,2,Yes
+Q94,If verbally asked for consent last sexual contact,$H94XX,3,No
+Q95,Sports drinks,$H95XX, ,Missing
+Q95,Sports drinks,$H95XX,1,I did not drink
+Q95,Sports drinks,$H95XX,2,1 to 3 times
+Q95,Sports drinks,$H95XX,3,4 to 6 times
+Q95,Sports drinks,$H95XX,4,1 time per day
+Q95,Sports drinks,$H95XX,5,2 times per day
+Q95,Sports drinks,$H95XX,6,3 times per day
+Q95,Sports drinks,$H95XX,7,4 or more times per day
+Q96,Plain water,$H96XX, ,Missing
+Q96,Plain water,$H96XX,1,Did not drink water
+Q96,Plain water,$H96XX,2,1 to 3 times
+Q96,Plain water,$H96XX,3,4 to 6 times
+Q96,Plain water,$H96XX,4,1 time per day
+Q96,Plain water,$H96XX,5,2 times per day
+Q96,Plain water,$H96XX,6,3 times per day
+Q96,Plain water,$H96XX,7,4 or more times per day
+Q97,Muscle strengthening,$H97XX, ,Missing
+Q97,Muscle strengthening,$H97XX,1,0 days
+Q97,Muscle strengthening,$H97XX,2,1 day
+Q97,Muscle strengthening,$H97XX,3,2 days
+Q97,Muscle strengthening,$H97XX,4,3 days
+Q97,Muscle strengthening,$H97XX,5,4 days
+Q97,Muscle strengthening,$H97XX,6,5 days
+Q97,Muscle strengthening,$H97XX,7,6 days
+Q97,Muscle strengthening,$H97XX,8,7 days
+Q98,Sunburn,$H98XX, ,Missing
+Q98,Sunburn,$H98XX,1,0 times
+Q98,Sunburn,$H98XX,2,1 time
+Q98,Sunburn,$H98XX,3,2 times
+Q98,Sunburn,$H98XX,4,3 times
+Q98,Sunburn,$H98XX,5,4 times
+Q98,Sunburn,$H98XX,6,5 or more times
+Q99,How often household adult met basic needs ACEs,$H99XX, ,Missing
+Q99,How often household adult met basic needs ACEs,$H99XX,1,Never
+Q99,How often household adult met basic needs ACEs,$H99XX,2,Rarely
+Q99,How often household adult met basic needs ACEs,$H99XX,3,Sometimes
+Q99,How often household adult met basic needs ACEs,$H99XX,4,Most of the time
+Q99,How often household adult met basic needs ACEs,$H99XX,5,Always
+Q100,Ever lived w/parent/guardian w/substance abuse ACE,$H100XX, ,Missing
+Q100,Ever lived w/parent/guardian w/substance abuse ACE,$H100XX,1,Yes
+Q100,Ever lived w/parent/guardian w/substance abuse ACE,$H100XX,2,No
+Q101,Ever lived with parent/guardian w mental illness A,$H101XX, ,Missing
+Q101,Ever lived with parent/guardian w mental illness A,$H101XX,1,Yes
+Q101,Ever lived with parent/guardian w mental illness A,$H101XX,2,No
+Q102,Ever incarcerated parent/guardian ACEs,$H102XX, ,Missing
+Q102,Ever incarcerated parent/guardian ACEs,$H102XX,1,Yes
+Q102,Ever incarcerated parent/guardian ACEs,$H102XX,2,No
+Q103,Feel close to people at their school,$H103XX, ,Missing
+Q103,Feel close to people at their school,$H103XX,1,Strongly agree
+Q103,Feel close to people at their school,$H103XX,2,Agree
+Q103,Feel close to people at their school,$H103XX,3,Not sure
+Q103,Feel close to people at their school,$H103XX,4,Disagree
+Q103,Feel close to people at their school,$H103XX,5,Strongly disagree
+Q104,Parental monitoring,$H104XX, ,Missing
+Q104,Parental monitoring,$H104XX,1,Never
+Q104,Parental monitoring,$H104XX,2,Rarely
+Q104,Parental monitoring,$H104XX,3,Sometimes
+Q104,Parental monitoring,$H104XX,4,Most of the time
+Q104,Parental monitoring,$H104XX,5,Always
+Q105,Unfairly disciplined at school,$H105XX, ,Missing
+Q105,Unfairly disciplined at school,$H105XX,1,Yes
+Q105,Unfairly disciplined at school,$H105XX,2,No
+Q106,Difficulty concentrating,$H106XX, ,Missing
+Q106,Difficulty concentrating,$H106XX,1,Yes
+Q106,Difficulty concentrating,$H106XX,2,No
+Q107,How well speak English,$H107XX, ,Missing
+Q107,How well speak English,$H107XX,1,Very well
+Q107,How well speak English,$H107XX,2,Well
+Q107,How well speak English,$H107XX,3,Not well
+Q107,How well speak English,$H107XX,4,Not at all
+RACEETH,Race/Ethnicity,$HRCE, ,Missing
+RACEETH,Race/Ethnicity,$HRCE,1,Am Indian/Alaska Native
+RACEETH,Race/Ethnicity,$HRCE,2,Asian
+RACEETH,Race/Ethnicity,$HRCE,3,Black or African American
+RACEETH,Race/Ethnicity,$HRCE,4,Native Hawaiian/Other PI
+RACEETH,Race/Ethnicity,$HRCE,5,White
+RACEETH,Race/Ethnicity,$HRCE,6,Hispanic/Latino
+RACEETH,Race/Ethnicity,$HRCE,7,Multiple - Hispanic
+RACEETH,Race/Ethnicity,$HRCE,8,Multiple - Non-Hispanic
