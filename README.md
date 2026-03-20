@@ -23,13 +23,17 @@ Please, fill the following sections about your project.
 >
 > Hint: some good pointers for finding quality publicly available datasets ([Google dataset search](https://datasetsearch.research.google.com/), [Kaggle](https://www.kaggle.com/datasets), [OpenSwissData](https://opendata.swiss/en/), [SNAP](https://snap.stanford.edu/data/) and [FiveThirtyEight](https://data.fivethirtyeight.com/)).
 
-We will use the 2023 national Youth Risk Behavior Survey (YRBS) from the CDC as our first dataset for Milestone 1. YRBS is a standardized, school-based survey of U.S. high school students and is well documented, making it a good fit for a data visualization project. In our local workflow, we converted the official ASCII release into raw and readable CSV files, giving us a working table with 20,103 student records and 250 raw variables.
+We will use the 2023 national Youth Risk Behavior Survey (YRBS) from the CDC as our first dataset for Milestone 1. YRBS is a standardized, school-based survey of U.S. high school students and is well documented, making it well suited for a data visualization project. We converted the official ASCII release into a readable CSV format, resulting in a dataset of 20,103 students and 250 variables.
 
-The data quality is strong because the survey instrument, variable labels, derived binary indicators, and survey weights are all provided by CDC. Preprocessing is manageable: the main work was converting the fixed-width release into CSV and preserving the codebook, which is already done in this repository. This makes YRBS a good fit for a broader adolescent-health project, because the same dataset covers mental health, sleep, physical activity, nutrition, bullying, housing instability, school connectedness, substance use, and body-weight indicators in a consistent format.
+The data quality is high, as the CDC provides the survey instrument, variable labels, derived indicators, and weights. Preprocessing was limited to format conversion and preserving the codebook. YRBS is particularly valuable because it covers multiple dimensions of adolescent health, including mental health, sleep, physical activity, nutrition, substance use, and school environment in a consistent format.
 
-We will use as a second dataset, the Social Media Addiction vs Relationships dataset published by Adil Shamim on Kaggle. Available under a CC BY 4.0 license, it was designed to explore the relationship between social media usage patterns and student wellbeing indicators, making it a strong fit for a data analysis and visualization project. The dataset contains 700 student records and 13 variables, covering undergraduate, graduate, and high school students across 110 countries, aged 18 to 24. Variables include demographic information alongside behavioral and psychological indicators such as daily usage hours, sleep duration, mental health score, and an addiction score.
+As a second dataset, we use the Social Media Addiction vs Relationships dataset by Adil Shamim (Kaggle, CC BY 4.0). It contains about 700 students aged 18–24 across 110 countries, with 13 variables covering demographics, daily usage, sleep, mental health, and addiction scores.
 
-The data quality is reasonable for an exploratory analysis. According to the provenance documentation, the survey was distributed through university mailing lists and social media channels, and raw exports underwent automated validation, de-duplication, and categorical harmonization, with all transformations logged according to W3C PROV standards. Our own quality checks confirm no missing values and no duplicate records, in addition the dataset is well balanced except for the fact that most women seem to be between 19-20, while most men between 21-22. But, as a self-reported web-based survey without probabilistic sampling, findings should be interpreted carefully.
+We also include the Teen Phone Addiction dataset from Kaggle, which focuses specifically on smartphone use and its relationship to lifestyle and wellbeing. It includes variables such as daily usage, social media time, sleep, anxiety, depression, academic performance, and addiction level, making it well suited for analyzing links between digital behavior and health.
+
+The Kaggle datasets are suitable for exploratory analysis. They contain no missing values or duplicates and are generally well balanced, though some age concentration is present. However, as self-reported, non-probabilistic surveys, results should be interpreted cautiously.
+
+
 
 ### Problematic
 
@@ -54,9 +58,7 @@ A first static overview chart generated from the same results is shown below and
 
 <img src="yrbs_2023/teen_health_profile_scorecard.svg" alt="Teen health profile scorecard" width="900" />
 
-The secondary exploratory notebook for the social-media-addiction dataset remains available at [Students_Social_Media_Addiction/data.ipynb](Students_Social_Media_Addiction/data.ipynb), but it is now supporting context rather than the center of the project.
-
-
+The secondary exploratory notebook for the social media addiction dataset is available at [Students_Social_Media_Addiction/data.ipynb](Students_Social_Media_Addiction/data.ipynb), alongside our exploration of the teen phone addiction dataset—covering daily phone and social media usage, sleep, and wellbeing indicators—available at [Teen_phone_addiction/teen_phone_addiction.ipynb](Teen_phone_addiction/teen_phone_addiction.ipynb). Both serve as supporting context rather than the main focus of the project.
 
 ### Related work
 
