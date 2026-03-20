@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="660" viewBox="0 0 1040 660" role="img" aria-labelledby="title desc">
+  <title id="title">Teen Health Profile Snapshot</title>
+  <desc id="desc">Weighted Yes prevalence for twelve adolescent health indicators from the 2023 national Youth Risk Behavior Survey.</desc>
+  <rect x="0" y="0" width="1040" height="660" fill="#FBFAF7"/>
+  <text x="36" y="42" font-family="Helvetica, Arial, sans-serif" font-size="28" font-weight="700" fill="#1F2933">Teen Health Profile Snapshot</text>
+  <text x="36" y="68" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#52606D">2023 national YRBS. Bars show weighted % of students answering Yes to each binary indicator. Higher is not always better.</text>
+  <line x1="360" y1="112" x2="880" y2="112" stroke="#9AA5B1" stroke-width="1"/>
+  <line x1="360.00" y1="112" x2="360.00" y2="616" stroke="#E4E7EB" stroke-width="1"/>
+  <text x="360.00" y="104" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#7B8794">0%</text>
+  <line x1="490.00" y1="112" x2="490.00" y2="616" stroke="#E4E7EB" stroke-width="1"/>
+  <text x="490.00" y="104" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#7B8794">25%</text>
+  <line x1="620.00" y1="112" x2="620.00" y2="616" stroke="#E4E7EB" stroke-width="1"/>
+  <text x="620.00" y="104" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#7B8794">50%</text>
+  <line x1="750.00" y1="112" x2="750.00" y2="616" stroke="#E4E7EB" stroke-width="1"/>
+  <text x="750.00" y="104" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#7B8794">75%</text>
+  <line x1="880.00" y1="112" x2="880.00" y2="616" stroke="#E4E7EB" stroke-width="1"/>
+  <text x="880.00" y="104" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#7B8794">100%</text>
+  <text x="36" y="130" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#D1495B">Mental / Emotional</text>
+  <text x="36" y="154" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1F2933">Sad or hopeless</text>
+  <rect x="360" y="139" width="520" height="16" rx="7" fill="#E8ECF1"/>
+  <rect x="360" y="139" width="206.54" height="16" rx="7" fill="#D1495B"/>
+  <text x="930" y="154" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1F2933">39.72%</text>
+  <text x="36" y="182" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1F2933">Poor current mental health</text>
+  <rect x="360" y="167" width="520" height="16" rx="7" fill="#E8ECF1"/>
+  <rect x="360" y="167" width="148.41" height="16" rx="7" fill="#D1495B"/>
+  <text x="930" y="182" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1F2933">28.54%</text>
+  <text x="36" y="228" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#2A9D8F">Physical Habits / Outcomes</text>
+  <text x="36" y="252" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1F2933">Physically active 5+ days</text>
+  <rect x="360" y="237" width="520" height="16" rx="7" fill="#E8ECF1"/>
+  <rect x="360" y="237" width="240.86" height="16" rx="7" fill="#2A9D8F"/>
+  <text x="930" y="252" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1F2933">46.32%</text>
+  <text x="36" y="280" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1F2933">Sleep 8+ hours</text>
+  <rect x="360" y="265" width="520" height="16" rx="7" fill="#E8ECF1"/>
+  <rect x="360" y="265" width="120.64" height="16" rx="7" fill="#2A9D8F"/>
+  <text x="930" y="280" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1F2933">23.20%</text>
+  <text x="36" y="308" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1F2933">Breakfast all 7 days</text>
+  <rect x="360" y="293" width="520" height="16" rx="7" fill="#E8ECF1"/>
+  <rect x="360" y="293" width="142.69" height="16" rx="7" fill="#2A9D8F"/>
+  <text x="930" y="308" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1F2933">27.44%</text>
+  <text x="36" y="336" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1F2933">Obesity</text>
+  <rect x="360" y="321" width="520" height="16" rx="7" fill="#E8ECF1"/>
+  <rect x="360" y="321" width="82.94" height="16" rx="7" fill="#2A9D8F"/>
+  <text x="930" y="336" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1F2933">15.95%</text>
+  <text x="36" y="382" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#E9A03B">Safety / Support</text>
+  <text x="36" y="406" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1F2933">Bullied at school</text>
+  <rect x="360" y="391" width="520" height="16" rx="7" fill="#E8ECF1"/>
+  <rect x="360" y="391" width="100.05" height="16" rx="7" fill="#E9A03B"/>
+  <text x="930" y="406" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1F2933">19.24%</text>
+  <text x="36" y="434" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1F2933">Unstable housing</text>
+  <rect x="360" y="419" width="520" height="16" rx="7" fill="#E8ECF1"/>
+  <rect x="360" y="419" width="17.16" height="16" rx="7" fill="#E9A03B"/>
+  <text x="930" y="434" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1F2933">3.30%</text>
+  <text x="36" y="462" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1F2933">Basic needs met</text>
+  <rect x="360" y="447" width="520" height="16" rx="7" fill="#E8ECF1"/>
+  <rect x="360" y="447" width="448.66" height="16" rx="7" fill="#E9A03B"/>
+  <text x="930" y="462" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1F2933">86.28%</text>
+  <text x="36" y="508" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#457B9D">Substance Use</text>
+  <text x="36" y="532" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1F2933">Current tobacco or EVP use</text>
+  <rect x="360" y="517" width="520" height="16" rx="7" fill="#E8ECF1"/>
+  <rect x="360" y="517" width="93.29" height="16" rx="7" fill="#457B9D"/>
+  <text x="930" y="532" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1F2933">17.94%</text>
+  <text x="36" y="560" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1F2933">Current alcohol use</text>
+  <rect x="360" y="545" width="520" height="16" rx="7" fill="#E8ECF1"/>
+  <rect x="360" y="545" width="114.92" height="16" rx="7" fill="#457B9D"/>
+  <text x="930" y="560" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1F2933">22.10%</text>
+  <text x="36" y="588" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1F2933">Current marijuana use</text>
+  <rect x="360" y="573" width="520" height="16" rx="7" fill="#E8ECF1"/>
+  <rect x="360" y="573" width="88.35" height="16" rx="7" fill="#457B9D"/>
+  <text x="930" y="588" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1F2933">16.99%</text>
+  <text x="36" y="642" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#7B8794">Source: yrbs2023_readable.csv via teen_health_profile_analysis.py and survey weights in WEIGHT.</text>
+</svg>
