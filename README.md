@@ -50,7 +50,9 @@ We added a standard-library analysis script at [yrbs_2023/teen_health_profile_an
 
 The first descriptive results already suggest that this broader framing is promising for visualization. Weighted estimates show that 39.72% of students felt sad or hopeless and 28.54% reported poor current mental health. On the physical-health side, 46.32% met the 5-day activity benchmark, but only 23.20% got 8 or more hours of sleep and 27.44% ate breakfast on all 7 days. Substance use also varies strongly by grade: current marijuana use rises from 10.83% in 9th grade to 24.53% in 12th grade, and current tobacco or electronic vapor product use rises from 12.75% to 23.16%. We also see large subgroup gaps, for example poor current mental health is 38.76% among female students versus 18.83% among male students. These results are descriptive and weighted, so they are useful for feasibility and story design but should not be interpreted as causal claims.
 
-A first static overview chart generated from the same results is available at [yrbs_2023/teen_health_profile_scorecard.svg](yrbs_2023/teen_health_profile_scorecard.svg), produced by [yrbs_2023/teen_health_profile_plot.py](yrbs_2023/teen_health_profile_plot.py).
+A first static overview chart generated from the same results is shown below and is produced by [yrbs_2023/teen_health_profile_plot.py](yrbs_2023/teen_health_profile_plot.py).
+
+<img src="yrbs_2023/teen_health_profile_scorecard.svg" alt="Teen health profile scorecard" width="900" />
 
 The secondary exploratory notebook for the social-media-addiction dataset remains available at [Students_Social_Media_Addiction/data.ipynb](Students_Social_Media_Addiction/data.ipynb), but it is now supporting context rather than the center of the project.
 
