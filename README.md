@@ -27,6 +27,10 @@ We will use the 2023 national Youth Risk Behavior Survey (YRBS) from the CDC as 
 
 The data quality is strong because the survey instrument, variable labels, and value labels are all provided by CDC. Preprocessing is manageable: the main work was converting the fixed-width file into CSV and preserving the codebook. For the first milestone, we focus on social media use (`Q80` and the derived binary `QN80`) and mental health (`Q84` and the derived binary `QN84`), while using sex (`Q2`) and grade (`Q3`) for subgroup checks. Missingness is moderate for the focal questions (`Q80`: 24.37%, `Q84`: 21.88%) but very low for sex and grade (below 1%), so the dataset is still feasible for a first descriptive analysis.
 
+We will use as a second dataset, the Social Media Addiction vs Relationships dataset published by Adil Shamim on Kaggle. Available under a CC BY 4.0 license, it was designed to explore the relationship between social media usage patterns and student wellbeing indicators, making it a strong fit for a data analysis and visualization project. The dataset contains 700 student records and 13 variables, covering undergraduate, graduate, and high school students across 110 countries, aged 18 to 24. Variables include demographic information alongside behavioral and psychological indicators such as daily usage hours, sleep duration, mental health score, and an addiction score.
+
+The data quality is reasonable for an exploratory analysis. According to the provenance documentation, the survey was distributed through university mailing lists and social media channels, and raw exports underwent automated validation, de-duplication, and categorical harmonization, with all transformations logged according to W3C PROV standards. Our own quality checks confirm no missing values and no duplicate records, in addition the dataset is well balanced except for the fact that most women seem to be between 19-20, while most men between 21-22. But, as a self-reported web-based survey without probabilistic sampling, findings should be interpreted carefully.
+
 ### Problematic
 
 > Frame the general topic of your visualization and the main axis that you want to develop.
@@ -46,6 +50,8 @@ We added a simple standard-library analysis script at [yrbs_2023/basic_social_me
 
 The first descriptive results already suggest that the topic is promising for visualization. Social media use is very common: the two largest categories are `Several times a day` (5,888 students) and `More than once an hour` (4,803 students). Using the CDC-derived binary indicators, 11,602 students have valid values on both `QN80` and `QN84`. Among frequent social media users, 32.56% report poor mental health, compared with 22.45% among other users. The gap is present for both female students (43.15% vs 30.49%) and male students (20.88% vs 17.26%). These numbers are descriptive and unweighted, so they are useful for feasibility and exploration, but they should not yet be interpreted as causal evidence or final population estimates.
 
+For the Students' social media addiction dataset, the exploratory data analysis, containing the quality assesment, statistics and different plots of correlation or visualisation, can be found at [Students_Social_Media_Addiction/data.ipynb](Students_Social_Media_Addiction/data.ipynb).
+
 ### Related work
 
 
@@ -57,6 +63,8 @@ The first descriptive results already suggest that the topic is promising for vi
 There is already substantial public-health and academic work around this topic. CDC provides a [2023 YRBS results overview](https://www.cdc.gov/yrbs/results/2023-yrbs-results.html), the [YRBS Explorer and analysis tooling](https://www.cdc.gov/yrbs), and a dedicated 2024 MMWR article on [frequent social media use, sadness or hopelessness, bullying, and suicide risk](https://www.cdc.gov/mmwr/volumes/73/su/su7304a3.htm). At the policy level, the U.S. Surgeon General's [Social Media and Youth Mental Health advisory](https://www.hhs.gov/surgeongeneral/reports-and-publications/youth-mental-health/social-media/index.html) gives broader context for why this question matters. In academic research, recent work includes a 2024 JAMA Pediatrics [systematic review and meta-analysis](https://jamanetwork.com/journals/jamapediatrics/fullarticle/2819781) and a 2025 JAMA Network Open study on [social media use and depressive symptoms during early adolescence](https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2834349).
 
 Our approach is still original in the context of this project because we are not trying to build another general-purpose dashboard or repeat a national report. Instead, we want to craft a focused visualization narrative around one interpretable relationship inside YRBS: frequent social media use and poor mental health, with subgroup comparisons that make the pattern easier to read. As inspiration, we take cues from CDC's YRBS Explorer for clarity and public-health accessibility, but we want a more coherent storytelling experience centered on one question rather than a broad survey portal.
+
+For the Students' social media addiction dataset, other explorations of the dataset can be found on Kaggle.
 
 ## Milestone 2 (17th April, 5pm)
 
