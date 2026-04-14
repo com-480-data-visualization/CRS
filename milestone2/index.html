@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Teen Health Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+
+<h1>Teen Health Profile Dashboard</h1>
+
+<!-- YRBS -->
+<h2>2023 National Youth Risk Behavior Survey Data</h2>
+
+<div id="controls">
+  <label>Group by:</label>
+  <select id="group-select">
+    <option value="sex">Gender</option>
+    <option value="age">Age</option>
+    <option value="race">Race</option>
+  </select>
+</div>
+
+<div id="bar-chart"></div>
+
+<img src="images/teen_health_profile_scorecard.svg" alt="">
+
+<!-- PHONE ADDICTION DATASET -->
+<h2>Teen Phone Addiction Dataset</h2>
+
+<div id="summary-phone"></div>
+
+<select id="phone-option">
+    <option value="A">Addiction vs Usage</option>
+    <option value="B">Usage vs Anxiety</option>
+</select>
+
+<div id="bar-chart-phone"></div>
+
+<script src="main.js"></script>
+
+</body>
+</html>

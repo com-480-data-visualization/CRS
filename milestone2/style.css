@@ -1,0 +1,22 @@
+body {
+  font-family: Arial;
+  margin: 40px;
+}
+
+#dashboard {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+#summary {
+  grid-column: span 2;
+  padding: 5px;
+  border: 1px solid #ccc;
+}
+
+#summary-phone {
+  grid-column: span 2;
+  padding: 5px;
+  border: 1px solid #ccc;
+}
