@@ -76,46 +76,127 @@ d3.csv("data/teen_phone_addiction_dataset.csv").then(data => {
 });
 
 // ═══════════════════════════════════════════════════════════
-// SECTION 1 — Demographics (4 small bar charts)
+// SECTION 1 — Demographics (interactive cross-filter)
 // ═══════════════════════════════════════════════════════════
-function drawDemographics(data) {
+
+// naturalW drives both the SVG viewBox width and the CSS grid fr ratio.
+// When grid proportions == naturalW ratios, all charts render at the same height.
+const DEMO_SPECS = [
+  {
+    field: "age", title: "Age", naturalW: 340,
+    order: ["12 years old or younger","13 years old","14 years old",
+            "15 years old","16 years old","17 years old","18 years old or older"],
+    shorten: v => v.replace(" years old","").replace("12 years old or younger","≤12").replace("18 years old or older","18+"),
+  },
+  {
+    field: "sex", title: "Sex", naturalW: 180,
+    order: ["Male","Female"],
+    shorten: v => v,
+  },
+  {
+    field: "grade", title: "Grade", naturalW: 260,
+    order: ["9th grade","10th grade","11th grade","12th grade"],
+    shorten: v => v.replace(" grade",""),
+  },
+  {
+    field: "race", title: "Race / Ethnicity", naturalW: 480,
+    order: null,
+    shorten: v => v.length > 16 ? v.slice(0, 15) + "…" : v,
+  },
+];
+
+// Cross-filter state: { age: null, sex: null, grade: null, race: null }
+const demoFilters = Object.fromEntries(DEMO_SPECS.map(s => [s.field, null]));
+
+function applyDemoFilters(data, excluding = null) {
+  return data.filter(d =>
+    DEMO_SPECS.every(spec => {
+      if (spec.field === excluding) return true;
+      const v = demoFilters[spec.field];
+      return !v || d[spec.field] === v;
+    })
+  );
+}
+
+// Shared reusable tooltip
+const demoTooltip = d3.select("body").append("div").attr("class", "demo-tooltip");
+
+function drawDemographics(allData) {
+  _allDemoData = allData;
+  // Set grid columns proportional to naturalW so all charts render at equal height
+  d3.select("#demo-charts")
+    .style("grid-template-columns", DEMO_SPECS.map(s => `${s.naturalW}fr`).join(" "));
+  renderDemographics(allData);
+}
+
+// Keep a reference so filters can trigger re-renders
+let _allDemoData = null;
+
+function renderDemographics(allData) {
   const container = d3.select("#demo-charts");
-  container.selectAll("*").remove();
 
-  const specs = [
-    {
-      field: "age", title: "Age",
-      order: ["12 years old or younger","13 years old","14 years old",
-              "15 years old","16 years old","17 years old","18 years old or older"],
-      shorten: v => v.replace(" years old","").replace(" or younger","≤12").replace(" or older","18+"),
-    },
-    {
-      field: "sex", title: "Sex",
-      order: ["Male","Female"],
-      shorten: v => v,
-    },
-    {
-      field: "grade", title: "Grade",
-      order: ["9th grade","10th grade","11th grade","12th grade","Ungraded or other grade"],
-      shorten: v => v.replace(" grade",""),
-    },
-    {
-      field: "race", title: "Race / Ethnicity",
-      order: null,   // sort by count descending
-      shorten: v => v.length > 18 ? v.slice(0, 17) + "…" : v,
-    },
-  ];
+  // ── Filtered count badge ──────────────────────────────────
+  let badge = d3.select("#demo-filter-badge");
+  if (badge.empty()) {
+    badge = d3.select("#section-demographics")
+      .insert("div", "#demo-charts")
+      .attr("id", "demo-filter-badge");
+  }
 
-  const W = 220, H = 200, margin = { top: 28, right: 12, bottom: 60, left: 40 };
+  const active = Object.values(demoFilters).filter(Boolean);
+  const filteredTotal = applyDemoFilters(allData).length;
 
-  specs.forEach(spec => {
-    const wrap = container.append("div").attr("class", "demo-chart-wrap");
+  if (active.length > 0) {
+    badge.html(`
+      <span class="filter-count">Showing <strong>${filteredTotal.toLocaleString()}</strong> of ${allData.length.toLocaleString()} students</span>
+      <button class="filter-reset" id="demo-reset-btn">✕ Clear filters</button>
+    `);
+    d3.select("#demo-reset-btn").on("click", () => {
+      DEMO_SPECS.forEach(s => { demoFilters[s.field] = null; });
+      renderDemographics(allData);
+    });
+  } else {
+    badge.html(`<span class="filter-count-neutral">${allData.length.toLocaleString()} students total — <em>click any bar to filter</em></span>`);
+  }
 
-    const counts = d3.rollups(
-      data.filter(d => d[spec.field]),
-      v => v.length,
-      d => d[spec.field]
-    );
+  // ── Per-chart rendering ───────────────────────────────────
+  const H = 260;   // same viewBox height for all charts
+  const margin = { top: 12, right: 14, bottom: 72, left: 48 };
+  const ih = H - margin.top - margin.bottom;
+  const TRANSITION_MS = 350;
+
+  DEMO_SPECS.forEach(spec => {
+    const W  = spec.naturalW;                       // per-chart viewBox width
+    const iw = W - margin.left - margin.right;
+    const chartId = `demo-chart-${spec.field}`;
+
+    // Create wrapper once
+    let wrap = container.select(`#${chartId}`);
+    if (wrap.empty()) {
+      wrap = container.append("div")
+        .attr("class", "demo-chart-wrap")
+        .attr("id", chartId);
+      wrap.append("div").attr("class", "chart-title").text(spec.title);
+      wrap.append("svg")
+          .attr("viewBox", `0 0 ${W} ${H}`)
+          .attr("width", "100%")           // fills grid cell
+          .attr("preserveAspectRatio", "xMidYMid meet")
+          .style("display", "block")
+          .style("overflow", "visible")
+        .append("g")
+          .attr("class", "demo-g")
+          .attr("transform", `translate(${margin.left},${margin.top})`);
+    }
+
+    const svg = wrap.select("svg");
+    const g   = svg.select(".demo-g");
+
+    // Data: filtered by everything except this dimension
+    const sliceData = applyDemoFilters(allData, spec.field);
+    const totalSlice = sliceData.length;
+    const activeVal  = demoFilters[spec.field];
+
+    const counts = d3.rollups(sliceData.filter(d => d[spec.field]), v => v.length, d => d[spec.field]);
 
     let sorted;
     if (spec.order) {
@@ -126,45 +207,83 @@ function drawDemographics(data) {
       sorted = counts.map(([k, v]) => ({ key: k, val: v })).sort((a, b) => b.val - a.val);
     }
 
-    const svg = wrap.append("svg")
-      .attr("width", W)
-      .attr("height", H);
+    // Scales
+    const x = d3.scaleBand().domain(sorted.map(d => d.key)).range([0, iw]).padding(0.25);
+    const y = d3.scaleLinear().domain([0, d3.max(sorted, d => d.val) || 1]).nice().range([ih, 0]);
 
-    wrap.append("div").attr("class", "chart-title").text(spec.title);
+    // ── Bars ─────────────────────────────────────────────────
+    const bars = g.selectAll(".demo-bar").data(sorted, d => d.key);
 
-    const iw = W - margin.left - margin.right;
-    const ih = H - margin.top - margin.bottom;
-    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-
-    const x = d3.scaleBand()
-      .domain(sorted.map(d => d.key))
-      .range([0, iw])
-      .padding(0.2);
-
-    const y = d3.scaleLinear()
-      .domain([0, d3.max(sorted, d => d.val)])
-      .nice()
-      .range([ih, 0]);
-
-    g.selectAll("rect")
-      .data(sorted)
-      .join("rect")
+    // ENTER
+    const barsEnter = bars.enter().append("rect").attr("class", "demo-bar")
       .attr("x", d => x(d.key))
-      .attr("y", d => y(d.val))
       .attr("width", x.bandwidth())
+      .attr("y", ih)            // start from bottom
+      .attr("height", 0)
+      .attr("rx", 4)
+      .style("cursor", "pointer");
+
+    // UPDATE + ENTER merged
+    barsEnter.merge(bars)
+      .on("mouseover", (_event, d) => {
+        const pct = totalSlice ? (d.val / totalSlice * 100).toFixed(1) : 0;
+        demoTooltip
+          .style("opacity", 1)
+          .html(`<strong>${d.key}</strong><br>${d.val.toLocaleString()} students<br>${pct}%`);
+      })
+      .on("mousemove", event => {
+        demoTooltip
+          .style("left", (event.pageX + 14) + "px")
+          .style("top",  (event.pageY - 38) + "px");
+      })
+      .on("mouseout", () => demoTooltip.style("opacity", 0))
+      .on("click", (_ev, d) => {
+        // Toggle filter
+        demoFilters[spec.field] = (demoFilters[spec.field] === d.key) ? null : d.key;
+        renderDemographics(allData);
+      })
+      .transition().duration(TRANSITION_MS).ease(d3.easeCubicOut)
+      .attr("x", d => x(d.key))
+      .attr("width", x.bandwidth())
+      .attr("y", d => y(d.val))
       .attr("height", d => ih - y(d.val))
       .attr("fill", (d, i) => colorFor(d.key, i))
-      .attr("rx", 2);
+      .attr("fill-opacity", d => (!activeVal || d.key === activeVal) ? 1 : 0.2)
+      .attr("stroke", d => d.key === activeVal ? "#1a1a2e" : "none")
+      .attr("stroke-width", 2);
 
-    g.append("g")
+    bars.exit().transition().duration(TRANSITION_MS).attr("height", 0).attr("y", ih).remove();
+
+    // ── Value labels ─────────────────────────────────────────
+    const labels = g.selectAll(".demo-val-label").data(sorted, d => d.key);
+
+    labels.enter().append("text").attr("class", "demo-val-label")
+      .attr("text-anchor", "middle")
+      .style("font-size", "10px")
+      .style("pointer-events", "none")
+      .attr("y", ih)
+      .merge(labels)
+      .transition().duration(TRANSITION_MS).ease(d3.easeCubicOut)
+      .attr("x", d => x(d.key) + x.bandwidth() / 2)
+      .attr("y", d => y(d.val) - 4)
+      .style("fill", d => (!activeVal || d.key === activeVal) ? "#444" : "#bbb")
+      .text(d => d3.format("~s")(d.val));
+
+    labels.exit().remove();
+
+    // ── Axes (re-render fresh each time) ─────────────────────
+    g.selectAll(".x-axis").remove();
+    g.selectAll(".y-axis").remove();
+
+    g.append("g").attr("class","x-axis")
       .attr("transform", `translate(0,${ih})`)
       .call(d3.axisBottom(x).tickFormat(k => spec.shorten(k)))
       .selectAll("text")
-      .attr("transform", "rotate(-35)")
-      .style("text-anchor", "end")
-      .style("font-size", "10px");
+        .attr("transform", "rotate(-35)")
+        .style("text-anchor", "end")
+        .style("font-size", "10px");
 
-    g.append("g")
+    g.append("g").attr("class","y-axis")
       .call(d3.axisLeft(y).ticks(4).tickFormat(d3.format("~s")));
   });
 }
