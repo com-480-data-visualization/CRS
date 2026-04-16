@@ -5,40 +5,100 @@
   <title>Teen Health Dashboard</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
 </head>
 <body>
 
-<h1>Teen Health Profile Dashboard</h1>
+<header>
+  <h1>Teen Health Profile Dashboard</h1>
+  <p class="subtitle">2023 CDC Youth Risk Behavior Survey &amp; Teen Phone Addiction Dataset</p>
+</header>
 
-<!-- YRBS -->
-<h2>2023 National Youth Risk Behavior Survey Data</h2>
+<!-- ═══════════════════════════════════════════════════
+     SECTION 1: YRBS DEMOGRAPHICS
+═══════════════════════════════════════════════════ -->
+<section id="section-demographics">
+  <h2>Demographics Overview</h2>
+  <p class="section-desc">Distribution of the 20,103 surveyed students by age, sex, grade, and race/ethnicity.</p>
+  <div id="demo-charts" class="chart-row"></div>
+</section>
 
-<div id="controls">
-  <label>Group by:</label>
-  <select id="group-select">
-    <option value="sex">Gender</option>
-    <option value="age">Age</option>
-    <option value="race">Race</option>
-  </select>
-</div>
+<!-- ═══════════════════════════════════════════════════
+     SECTION 2: HEALTH DOMAIN RADAR
+═══════════════════════════════════════════════════ -->
+<section id="section-radar">
+  <h2>Health Domain Radar</h2>
+  <p class="section-desc">Five health dimensions compared across demographic groups. Each axis shows the % of students with a positive / protective outcome.</p>
+  <div id="radar-controls" class="controls">
+    <label>Compare by:</label>
+    <select id="radar-group-select">
+      <option value="sex">Sex</option>
+      <option value="grade">Grade</option>
+    </select>
+  </div>
+  <div id="radar-chart"></div>
+</section>
 
-<div id="bar-chart"></div>
+<!-- ═══════════════════════════════════════════════════
+     SECTION 3: YRBS GROUPED BAR (existing, polished)
+═══════════════════════════════════════════════════ -->
+<section id="section-bar">
+  <h2>Health Indicator by Subgroup</h2>
+  <p class="section-desc">Percentage of students with a selected risk or protective indicator, broken down by demographic group.</p>
+  <div class="controls">
+    <label>Indicator:</label>
+    <select id="indicator-select">
+      <option value="sad">Felt sad or hopeless</option>
+      <option value="sleep">Adequate sleep (8+ hrs)</option>
+      <option value="active">Physically active 7 days/wk</option>
+      <option value="marijuana">No marijuana use</option>
+      <option value="alcohol">No alcohol use</option>
+      <option value="safety">School safety (no weapon)</option>
+    </select>
+    <label style="margin-left:1.5rem">Group by:</label>
+    <select id="group-select">
+      <option value="sex">Sex</option>
+      <option value="grade">Grade</option>
+      <option value="race">Race/Ethnicity</option>
+    </select>
+  </div>
+  <div id="bar-chart"></div>
+</section>
 
-<img src="images/teen_health_profile_scorecard.svg" alt="">
+<!-- ═══════════════════════════════════════════════════
+     SECTION 4: PHONE — HEATMAP
+═══════════════════════════════════════════════════ -->
+<section id="section-heatmap">
+  <h2>Phone Usage &amp; Wellbeing Heatmap</h2>
+  <p class="section-desc">Average wellbeing and behavioral metrics across phone addiction level groups (Teen Phone Addiction dataset, n ≈ 700).</p>
+  <div id="heatmap-chart"></div>
+</section>
 
-<!-- PHONE ADDICTION DATASET -->
-<h2>Teen Phone Addiction Dataset</h2>
+<!-- ═══════════════════════════════════════════════════
+     SECTION 5: PHONE — SCATTER
+═══════════════════════════════════════════════════ -->
+<section id="section-scatter">
+  <h2>Daily Phone Usage vs. Anxiety Level</h2>
+  <p class="section-desc">Each dot is one student. Color indicates addiction level. Hover for details.</p>
+  <div id="scatter-chart"></div>
+</section>
 
-<div id="summary-phone"></div>
-
-<select id="phone-option">
-    <option value="A">Addiction vs Usage</option>
-    <option value="B">Usage vs Anxiety</option>
-</select>
-
-<div id="bar-chart-phone"></div>
+<!-- ═══════════════════════════════════════════════════
+     SECTION 6: PHONE — legacy charts (kept)
+═══════════════════════════════════════════════════ -->
+<section id="section-phone-legacy">
+  <h2>Phone Addiction — Additional Charts</h2>
+  <div id="summary-phone"></div>
+  <div class="controls">
+    <label>View:</label>
+    <select id="phone-option">
+      <option value="A">Addiction level vs. avg daily usage</option>
+      <option value="B">Usage group vs. avg anxiety</option>
+    </select>
+  </div>
+  <div id="bar-chart-phone"></div>
+</section>
 
 <script src="main.js"></script>
-
 </body>
 </html>
