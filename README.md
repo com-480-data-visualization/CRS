@@ -76,6 +76,14 @@ Our approach is still original in the context of this project because we want to
 
 **10% of the final grade**
 
+For Milestone 2, we refocused the project around a YRBS-based teen health profile: mental wellbeing, daily routines, school support, substance use, and relationship safety viewed together rather than as isolated topics.
+
+- [Milestone 2 write-up](milestone2_writeup.md)
+- [Prototype website](milestone2/index.html)
+- [YRBS teen health profile analysis](yrbs_2023/teen_health_profile_summary.md)
+
+The current prototype uses the 2023 national YRBS as the primary dataset and keeps the Teen Phone Addiction dataset as secondary context. The main new design direction is an interactive risk-stack view showing how weighted poor-current-mental-health prevalence changes as sleep, activity, bullying, substance-use, and school-connectedness risks accumulate, plus companion risk-gap views for individual components and relationship-safety indicators.
+
 
 ## Milestone 3 (29th May, 5pm)
 

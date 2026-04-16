@@ -15,6 +15,60 @@ function colorFor(key, i) {
   return COLORS[key] ?? COLORS.default[i % 10];
 }
 
+const YES = "1";
+const NO = "2";
+
+function weightOf(d) {
+  const value = Number(d.WEIGHT);
+  return Number.isFinite(value) && value > 0 ? value : 0;
+}
+
+function isBinary(d, field) {
+  return d[field] === YES || d[field] === NO;
+}
+
+function hasBinaryFields(fields) {
+  return d => fields.every(field => isBinary(d, field));
+}
+
+function weightedPercent(rows, hitFn, validFn) {
+  let numerator = 0;
+  let denominator = 0;
+
+  rows.forEach(d => {
+    const weight = weightOf(d);
+    if (!weight || !validFn(d)) return;
+    denominator += weight;
+    if (hitFn(d)) numerator += weight;
+  });
+
+  return denominator ? +(numerator / denominator * 100).toFixed(1) : 0;
+}
+
+function weightedStat(rows, hitFn, validFn) {
+  let numerator = 0;
+  let denominator = 0;
+  let validN = 0;
+
+  rows.forEach(d => {
+    const weight = weightOf(d);
+    if (!weight || !validFn(d)) return;
+    validN += 1;
+    denominator += weight;
+    if (hitFn(d)) numerator += weight;
+  });
+
+  return {
+    pct: denominator ? +(numerator / denominator * 100).toFixed(1) : 0,
+    validN,
+    missingPct: rows.length ? +((rows.length - validN) / rows.length * 100).toFixed(1) : 0,
+  };
+}
+
+function hasCodes(field, codes) {
+  return d => codes.includes(d[field]);
+}
+
 // ─────────────────────────────────────────────
 // YRBS dataset
 // ─────────────────────────────────────────────
@@ -32,15 +86,10 @@ d3.csv("data/yrbs2023_readable.csv").then(raw => {
   const data = raw.filter(d => d.sex && d.grade);
 
   drawDemographics(data);
-  renderRadarToggles(data, "sex");
-  drawRadar(data, "sex");
   drawDotPlot(data, "sex");
-
-  d3.select("#radar-group-select").on("change", function () {
-    const field = this.value;
-    renderRadarToggles(data, field);
-    drawRadar(data, field);
-  });
+  drawGradeShift(data);
+  initRiskProfiler(data);
+  drawSexualHealth(raw);
 
   d3.select("#group-select").on("change", function () {
     drawDotPlot(data, this.value);
@@ -54,22 +103,18 @@ d3.csv("data/teen_phone_addiction_dataset.csv").then(data => {
   data.forEach(d => {
     d.Daily_Usage_Hours   = +d.Daily_Usage_Hours;
     d.Sleep_Hours         = +d.Sleep_Hours;
+    d.Academic_Performance = +d.Academic_Performance;
     d.Anxiety_Level       = +d.Anxiety_Level;
     d.Depression_Level    = +d.Depression_Level;
     d.Self_Esteem         = +d.Self_Esteem;
     d.Exercise_Hours      = +d.Exercise_Hours;
     d.Addiction_Level     = +d.Addiction_Level;
     d.Phone_Checks_Per_Day = +d.Phone_Checks_Per_Day;
+    d.Time_on_Social_Media = +d.Time_on_Social_Media;
+    d.Weekend_Usage_Hours = +d.Weekend_Usage_Hours;
   });
 
-  drawSummaryPhone(data);
-  drawHeatmap(data);
-  drawScatter(data);
-  drawBarChartPhone(data, "A");
-
-  d3.select("#phone-option").on("change", function () {
-    drawBarChartPhone(data, this.value);
-  });
+  drawCorrelationChart(data);
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -290,11 +335,11 @@ function renderDemographics(allData) {
 // SECTION 2 — Radar chart
 // ═══════════════════════════════════════════════════════════
 const RADAR_AXES = [
-  { key: "mentalHealth", label: "Good mental health" },
-  { key: "sleep",        label: "Adequate sleep" },
-  { key: "active",       label: "Physically active" },
-  { key: "noSubstance",  label: "No substance use" },
-  { key: "safety",       label: "School safety" },
+  { key: "mentalHealth", label: "Not poor mental health" },
+  { key: "sleep",        label: "Sleep 8+ hrs" },
+  { key: "active",       label: "Active 5+ days" },
+  { key: "noBullying",   label: "No school bullying" },
+  { key: "noSubstance",  label: "No current substance" },
 ];
 
 const RADAR_GROUP_ORDERS = {
@@ -351,19 +396,21 @@ function renderRadarToggles(allData, groupField) {
 function computeRadarScores(allData, groupField) {
   return Array.from(radarSelected).map((grp, si) => {
     const subset = allData.filter(d => d[groupField] === grp);
-    const n = subset.length;
-    const pct = fn => n ? +(subset.filter(fn).length / n * 100).toFixed(1) : 0;
     // Map back to original palette index for consistent colours
     const paletteIdx = radarGroupsFor(allData, groupField).indexOf(grp);
     return {
       group: grp,
       color: colorFor(grp, paletteIdx === -1 ? si : paletteIdx),
       scores: {
-        mentalHealth: pct(d => d.Q26_label === "No"),
-        sleep:        pct(d => ["8 hours","9 hours","10 or more hours"].includes(d.Q85_label)),
-        active:       pct(d => d.Q75_label === "7 days"),
-        noSubstance:  pct(d => d.Q47_label === "Never tried marijuana" && d.Q41_label === "Never drank alcohol"),
-        safety:       pct(d => d.Q14_label === "0 days"),
+        mentalHealth: weightedPercent(subset, d => d.QN84 === NO, hasBinaryFields(["QN84"])),
+        sleep:        weightedPercent(subset, d => d.QN85 === YES, hasBinaryFields(["QN85"])),
+        active:       weightedPercent(subset, d => d.QN76 === YES, hasBinaryFields(["QN76"])),
+        noBullying:   weightedPercent(subset, d => d.QN24 === NO, hasBinaryFields(["QN24"])),
+        noSubstance:  weightedPercent(
+          subset,
+          d => d.QNTB4 === NO && d.QN42 === NO && d.QN48 === NO,
+          hasBinaryFields(["QNTB4", "QN42", "QN48"])
+        ),
       },
     };
   });
@@ -458,17 +505,8 @@ function drawRadar(allData, groupField) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// SECTION 3 — Health indicator grouped bar chart
+// SECTION 3 — Risk indicator dot plot
 // ═══════════════════════════════════════════════════════════
-const INDICATORS = {
-  sad:        { label: "Felt sad or hopeless (%)",  fn: d => d.Q26_label === "Yes" },
-  sleep:      { label: "Adequate sleep ≥8 hrs (%)", fn: d => ["8 hours","9 hours","10 or more hours"].includes(d.Q85_label) },
-  active:     { label: "Active 7 days/wk (%)",      fn: d => d.Q75_label === "7 days" },
-  marijuana:  { label: "No marijuana use (%)",       fn: d => d.Q47_label === "Never tried marijuana" },
-  alcohol:    { label: "No alcohol use (%)",         fn: d => d.Q41_label === "Never drank alcohol" },
-  safety:     { label: "School safety – no weapon (%)", fn: d => d.Q14_label === "0 days" },
-};
-
 const DOT_GROUP_ORDERS = {
   sex:   ["Male","Female"],
   grade: ["9th grade","10th grade","11th grade","12th grade"],
@@ -480,12 +518,12 @@ const DOT_GROUP_ORDERS = {
 };
 
 const DOT_INDICATORS = [
-  { key: "sad",       label: "Felt sad / hopeless",    fn: d => d.Q26_label === "Yes" },
-  { key: "sleep",     label: "Adequate sleep (≥8 hrs)", fn: d => ["8 hours","9 hours","10 or more hours"].includes(d.Q85_label) },
-  { key: "active",    label: "Physically active 7d/wk", fn: d => d.Q75_label === "7 days" },
-  { key: "marijuana", label: "No marijuana use",        fn: d => d.Q47_label === "Never tried marijuana" },
-  { key: "alcohol",   label: "No alcohol use",          fn: d => d.Q41_label === "Never drank alcohol" },
-  { key: "safety",    label: "School safety",           fn: d => d.Q14_label === "0 days" },
+  { key: "poorMental", label: "Poor mental health",      fields: ["QN84"],  fn: d => d.QN84 === YES },
+  { key: "lowSleep",   label: "Insufficient sleep",      fields: ["QN85"],  fn: d => d.QN85 === NO },
+  { key: "inactive",   label: "Inactive <5 days/wk",     fields: ["QN76"],  fn: d => d.QN76 === NO },
+  { key: "bullied",    label: "Bullied at school",       fields: ["QN24"],  fn: d => d.QN24 === YES },
+  { key: "tobacco",    label: "Current tobacco / EVP",   fields: ["QNTB4"], fn: d => d.QNTB4 === YES },
+  { key: "marijuana",  label: "Current marijuana use",   fields: ["QN48"],  fn: d => d.QN48 === YES },
 ];
 
 function drawDotPlot(data, groupField) {
@@ -498,7 +536,7 @@ function drawDotPlot(data, groupField) {
   const rows = DOT_INDICATORS.map(ind => {
     const pts = groups.map((g, gi) => {
       const subset = data.filter(d => d[groupField] === g);
-      const pct = subset.length ? +(subset.filter(ind.fn).length / subset.length * 100).toFixed(1) : 0;
+      const pct = weightedPercent(subset, ind.fn, hasBinaryFields(ind.fields));
       return { group: g, gi, pct };
     });
     return { label: ind.label, pts };
@@ -605,37 +643,956 @@ function drawDotPlot(data, groupField) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// SECTION 4 — Correlation bar chart: metrics vs addiction
+// SECTION 4 — Grade profile shift
 // ═══════════════════════════════════════════════════════════
+const GRADE_ORDER = ["9th grade", "10th grade", "11th grade", "12th grade"];
+
+const GRADE_SHIFT_METRICS = [
+  {
+    key: "sleep",
+    label: "Sleep 8+ hours",
+    fields: ["QN85"],
+    fn: d => d.QN85 === YES,
+    color: "#4e79a7",
+  },
+  {
+    key: "poorMental",
+    label: "Poor mental health",
+    fields: ["QN84"],
+    fn: d => d.QN84 === YES,
+    color: "#e15759",
+  },
+  {
+    key: "bullied",
+    label: "Bullied at school",
+    fields: ["QN24"],
+    fn: d => d.QN24 === YES,
+    color: "#f28e2b",
+  },
+  {
+    key: "connected",
+    label: "School connectedness",
+    fields: ["QN103"],
+    fn: d => d.QN103 === YES,
+    color: "#59a14f",
+  },
+  {
+    key: "tobacco",
+    label: "Current tobacco / EVP",
+    fields: ["QNTB4"],
+    fn: d => d.QNTB4 === YES,
+    color: "#b07aa1",
+  },
+  {
+    key: "marijuana",
+    label: "Current marijuana",
+    fields: ["QN48"],
+    fn: d => d.QN48 === YES,
+    color: "#9c755f",
+  },
+];
+
+function computeGradeShiftRows(data) {
+  return GRADE_SHIFT_METRICS.map(metric => ({
+    ...metric,
+    values: GRADE_ORDER.map(grade => {
+      const subset = data.filter(d => d.grade === grade);
+      const stat = weightedStat(subset, metric.fn, hasBinaryFields(metric.fields));
+      return { grade, ...stat };
+    }),
+  }));
+}
+
+function gradeMetricValue(rows, metricKey, grade) {
+  const metric = rows.find(d => d.key === metricKey);
+  return metric?.values.find(d => d.grade === grade)?.pct ?? 0;
+}
+
+function drawGradeShift(data) {
+  const rows = computeGradeShiftRows(data);
+
+  d3.select("#grade-shift-summary").html(`
+    <div class="grade-summary-card">
+      <span class="grade-summary-value">${gradeMetricValue(rows, "sleep", "9th grade")}% -> ${gradeMetricValue(rows, "sleep", "12th grade")}%</span>
+      <span class="grade-summary-label">sleep 8+ hours from 9th to 12th grade</span>
+    </div>
+    <div class="grade-summary-card">
+      <span class="grade-summary-value">${gradeMetricValue(rows, "marijuana", "9th grade")}% -> ${gradeMetricValue(rows, "marijuana", "12th grade")}%</span>
+      <span class="grade-summary-label">current marijuana use from 9th to 12th grade</span>
+    </div>
+    <div class="grade-summary-card">
+      <span class="grade-summary-value">${gradeMetricValue(rows, "bullied", "9th grade")}% -> ${gradeMetricValue(rows, "bullied", "12th grade")}%</span>
+      <span class="grade-summary-label">school bullying from 9th to 12th grade</span>
+    </div>
+  `);
+
+  d3.select("#grade-shift-chart").selectAll("*").remove();
+
+  const margin = { top: 28, right: 170, bottom: 58, left: 62 };
+  const W = 760, H = 420;
+  const iw = W - margin.left - margin.right;
+  const ih = H - margin.top - margin.bottom;
+  const allValues = rows.flatMap(metric => metric.values.map(d => d.pct));
+
+  const svg = d3.select("#grade-shift-chart")
+    .append("svg")
+    .attr("viewBox", `0 0 ${W} ${H}`)
+    .attr("width", "100%")
+    .style("max-width", "880px")
+    .style("display", "block")
+    .style("overflow", "visible");
+
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+  const x = d3.scalePoint().domain(GRADE_ORDER).range([0, iw]).padding(0.35);
+  const y = d3.scaleLinear()
+    .domain([0, Math.max(65, d3.max(allValues) || 0)])
+    .nice()
+    .range([ih, 0]);
+  const line = d3.line()
+    .x(d => x(d.grade))
+    .y(d => y(d.pct))
+    .curve(d3.curveMonotoneX);
+  const tip = d3.select("body").selectAll(".grade-shift-tooltip").data([1])
+    .join("div").attr("class", "grade-shift-tooltip dot-tooltip");
+
+  g.append("g")
+    .attr("class", "grid")
+    .call(d3.axisLeft(y).ticks(5).tickSize(-iw).tickFormat(""))
+    .selectAll("line").style("stroke", "#eceff4");
+  g.select(".grid .domain").remove();
+
+  g.append("g")
+    .attr("transform", `translate(0,${ih})`)
+    .call(d3.axisBottom(x))
+    .selectAll("text").style("font-size", "12px");
+  g.append("g")
+    .call(d3.axisLeft(y).ticks(5).tickFormat(d => `${d}%`))
+    .selectAll("text").style("font-size", "12px");
+  g.selectAll(".domain").style("display", "none");
+
+  const labelPositions = new Map();
+  const labelRows = [...rows].sort((a, b) =>
+    y(a.values[a.values.length - 1].pct) - y(b.values[b.values.length - 1].pct)
+  );
+  let nextLabelY = -Infinity;
+  labelRows.forEach(row => {
+    const desiredY = y(row.values[row.values.length - 1].pct);
+    const placedY = Math.max(desiredY, nextLabelY + 17);
+    labelPositions.set(row.key, placedY);
+    nextLabelY = placedY;
+  });
+  const overflow = nextLabelY - ih;
+  if (overflow > 0) {
+    labelPositions.forEach((value, key) => {
+      labelPositions.set(key, value - overflow);
+    });
+  }
+
+  const series = g.selectAll(".grade-series")
+    .data(rows, d => d.key)
+    .join("g")
+    .attr("class", "grade-series");
+
+  series.append("path")
+    .attr("d", d => line(d.values))
+    .attr("fill", "none")
+    .attr("stroke", d => d.color)
+    .attr("stroke-width", 2.5);
+
+  series.selectAll("circle")
+    .data(d => d.values.map(value => ({ ...value, metric: d })))
+    .join("circle")
+    .attr("cx", d => x(d.grade))
+    .attr("cy", d => y(d.pct))
+    .attr("r", 4.5)
+    .attr("fill", d => d.metric.color)
+    .attr("stroke", "#fff")
+    .attr("stroke-width", 1.5)
+    .on("mouseover", (_event, d) => {
+      tip.style("opacity", 1)
+        .html(`<strong>${d.metric.label}</strong><br>${d.grade}: ${d.pct}%<br>Valid n: ${d.validN.toLocaleString()}<br>Missing: ${d.missingPct}%`);
+    })
+    .on("mousemove", event => {
+      tip.style("left", (event.pageX + 12) + "px").style("top", (event.pageY - 46) + "px");
+    })
+    .on("mouseout", () => tip.style("opacity", 0));
+
+  series.append("line")
+    .attr("x1", d => x(GRADE_ORDER[GRADE_ORDER.length - 1]) + 5)
+    .attr("x2", iw + 8)
+    .attr("y1", d => y(d.values[d.values.length - 1].pct))
+    .attr("y2", d => labelPositions.get(d.key))
+    .attr("stroke", d => d.color)
+    .attr("stroke-width", 1)
+    .attr("stroke-opacity", 0.55);
+
+  series.append("text")
+    .attr("x", iw + 12)
+    .attr("y", d => labelPositions.get(d.key))
+    .attr("dy", "0.35em")
+    .style("font-size", "12px")
+    .style("font-weight", "700")
+    .style("fill", d => d.color)
+    .text(d => d.label);
+
+  g.append("text")
+    .attr("x", iw / 2)
+    .attr("y", ih + 42)
+    .attr("text-anchor", "middle")
+    .style("font-size", "12px")
+    .style("fill", "#555")
+    .text("Grade");
+
+  g.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("x", -ih / 2)
+    .attr("y", -44)
+    .attr("text-anchor", "middle")
+    .style("font-size", "12px")
+    .style("fill", "#555")
+    .text("Weighted percent");
+}
+
+// ═══════════════════════════════════════════════════════════
+// SECTIONS 5-6 — Risk role, risk stack, and poor current mental health
+// ═══════════════════════════════════════════════════════════
+const RISK_FACTORS = [
+  {
+    key: "sleep",
+    label: "Insufficient sleep",
+    fields: ["QN85"],
+    isRisk: d => d.QN85 === NO,
+  },
+  {
+    key: "activity",
+    label: "Physical inactivity",
+    fields: ["QN76"],
+    isRisk: d => d.QN76 === NO,
+  },
+  {
+    key: "bullying",
+    label: "Bullied at school",
+    fields: ["QN24"],
+    isRisk: d => d.QN24 === YES,
+  },
+  {
+    key: "substance",
+    label: "Current substance use",
+    fields: ["QNTB4", "QN42", "QN48"],
+    isRisk: d => d.QNTB4 === YES || d.QN42 === YES || d.QN48 === YES,
+  },
+  {
+    key: "connection",
+    label: "Low school connectedness",
+    fields: ["QN103"],
+    isRisk: d => d.QN103 === NO,
+  },
+];
+
+const riskSelected = new Set(RISK_FACTORS.map(d => d.key));
+
+function selectedRiskFactors() {
+  return RISK_FACTORS.filter(factor => riskSelected.has(factor.key));
+}
+
+function riskCount(d, factors) {
+  return factors.reduce((count, factor) => count + (factor.isRisk(d) ? 1 : 0), 0);
+}
+
+function riskFields(factors) {
+  return Array.from(new Set(["QN84", ...factors.flatMap(factor => factor.fields)]));
+}
+
+function initRiskProfiler(data) {
+  renderRiskSelector(data);
+  drawRiskStack(data);
+  drawRiskRole(data);
+}
+
+function updateRiskProfiler(data) {
+  drawRiskStack(data);
+  drawRiskRole(data);
+}
+
+function renderRiskSelector(data) {
+  const selector = d3.select("#risk-selector");
+  selector.selectAll("*").remove();
+
+  RISK_FACTORS.forEach(factor => {
+    const item = selector.append("label").attr("class", "risk-toggle");
+    item.append("input")
+      .attr("type", "checkbox")
+      .attr("checked", riskSelected.has(factor.key) ? true : null)
+      .on("change", function () {
+        if (this.checked) {
+          riskSelected.add(factor.key);
+        } else if (riskSelected.size > 1) {
+          riskSelected.delete(factor.key);
+        } else {
+          this.checked = true;
+          return;
+        }
+        updateRiskProfiler(data);
+      });
+    item.append("span").text(factor.label);
+  });
+
+  selector.append("button")
+    .attr("class", "risk-reset")
+    .text("All risks")
+    .on("click", () => {
+      riskSelected.clear();
+      RISK_FACTORS.forEach(factor => riskSelected.add(factor.key));
+      renderRiskSelector(data);
+      updateRiskProfiler(data);
+    });
+}
+
+function drawRiskStack(data) {
+  d3.select("#risk-stack-chart").selectAll("*").remove();
+
+  const factors = selectedRiskFactors();
+  const fields = riskFields(factors);
+  const validRows = data.filter(hasBinaryFields(fields));
+  const buckets = d3.range(0, factors.length + 1).map(count => {
+    const subset = validRows.filter(d => riskCount(d, factors) === count);
+    return {
+      count,
+      n: subset.length,
+      poorMentalHealth: weightedPercent(subset, d => d.QN84 === YES, hasBinaryFields(["QN84"])),
+      share: weightedPercent(validRows, d => riskCount(d, factors) === count, () => true),
+    };
+  });
+
+  const margin = { top: 26, right: 120, bottom: 58, left: 60 };
+  const W = 680, H = 380;
+  const iw = W - margin.left - margin.right;
+  const ih = H - margin.top - margin.bottom;
+
+  const svg = d3.select("#risk-stack-chart")
+    .append("svg")
+    .attr("viewBox", `0 0 ${W} ${H}`)
+    .attr("width", "100%")
+    .style("max-width", "760px")
+    .style("display", "block")
+    .style("overflow", "visible");
+
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+  const x = d3.scaleBand()
+    .domain(buckets.map(d => String(d.count)))
+    .range([0, iw])
+    .padding(0.32);
+
+  const y = d3.scaleLinear()
+    .domain([0, Math.max(80, d3.max(buckets, d => d.poorMentalHealth) || 0)])
+    .nice()
+    .range([ih, 0]);
+
+  const tip = d3.select("body").selectAll(".risk-profile-tooltip").data([1])
+    .join("div").attr("class", "risk-profile-tooltip dot-tooltip");
+
+  g.append("g")
+    .attr("class", "grid")
+    .call(d3.axisLeft(y).ticks(5).tickSize(-iw).tickFormat(""))
+    .selectAll("line").style("stroke", "#eceff4");
+  g.select(".grid .domain").remove();
+
+  g.append("g")
+    .attr("transform", `translate(0,${ih})`)
+    .call(d3.axisBottom(x))
+    .selectAll("text").style("font-size", "13px");
+
+  g.append("g")
+    .call(d3.axisLeft(y).ticks(5).tickFormat(d => `${d}%`))
+    .selectAll("text").style("font-size", "12px");
+  g.selectAll(".domain").style("display", "none");
+
+  const line = d3.line()
+    .x(d => x(String(d.count)) + x.bandwidth() / 2)
+    .y(d => y(d.poorMentalHealth))
+    .curve(d3.curveMonotoneX);
+
+  g.append("path")
+    .datum(buckets)
+    .attr("d", line)
+    .attr("fill", "none")
+    .attr("stroke", "#4e79a7")
+    .attr("stroke-width", 3);
+
+  const bars = g.selectAll(".risk-stack-bar")
+    .data(buckets)
+    .join("g")
+    .attr("class", "risk-stack-bar")
+    .attr("transform", d => `translate(${x(String(d.count))},0)`);
+
+  bars.append("rect")
+    .attr("x", 0)
+    .attr("y", d => y(d.poorMentalHealth))
+    .attr("width", x.bandwidth())
+    .attr("height", d => ih - y(d.poorMentalHealth))
+    .attr("fill", "#4e79a7")
+    .attr("fill-opacity", 0.22)
+    .attr("rx", 4);
+
+  bars.append("circle")
+    .attr("cx", x.bandwidth() / 2)
+    .attr("cy", d => y(d.poorMentalHealth))
+    .attr("r", 6)
+    .attr("fill", "#4e79a7")
+    .attr("stroke", "#fff")
+    .attr("stroke-width", 2)
+    .on("mouseover", (_event, d) => {
+      tip.style("opacity", 1)
+        .html(`<strong>${d.count} selected risks</strong><br>Poor mental health: <strong>${d.poorMentalHealth}%</strong><br>Weighted share: ${d.share}%<br>Valid n: ${d.n.toLocaleString()}`);
+    })
+    .on("mousemove", event => {
+      tip.style("left", (event.pageX + 12) + "px").style("top", (event.pageY - 42) + "px");
+    })
+    .on("mouseout", () => tip.style("opacity", 0));
+
+  bars.append("text")
+    .attr("x", x.bandwidth() / 2)
+    .attr("y", d => y(d.poorMentalHealth) - 12)
+    .attr("text-anchor", "middle")
+    .style("font-size", "12px")
+    .style("font-weight", "700")
+    .style("fill", "#26364d")
+    .text(d => `${d.poorMentalHealth}%`);
+
+  g.append("text")
+    .attr("x", iw / 2)
+    .attr("y", ih + 42)
+    .attr("text-anchor", "middle")
+    .style("font-size", "12px")
+    .style("fill", "#555")
+    .text("Number of selected risks");
+
+  g.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("x", -ih / 2)
+    .attr("y", -44)
+    .attr("text-anchor", "middle")
+    .style("font-size", "12px")
+    .style("fill", "#555")
+    .text("Poor current mental health");
+
+  const note = svg.append("g").attr("transform", `translate(${margin.left + iw + 18}, ${margin.top + 22})`);
+  note.append("text")
+    .style("font-size", "11px")
+    .style("font-weight", "700")
+    .style("fill", "#333")
+    .text("Complete-case view");
+  note.append("text")
+    .attr("y", 18)
+    .style("font-size", "11px")
+    .style("fill", "#666")
+    .text(`${validRows.length.toLocaleString()} valid rows`);
+  note.append("text")
+    .attr("y", 36)
+    .style("font-size", "11px")
+    .style("fill", "#666")
+    .text(`${factors.length} active risks`);
+}
+
+function computeRiskRoleRows(data) {
+  return RISK_FACTORS.map(factor => {
+    const fields = ["QN84", ...factor.fields];
+    const validRows = data.filter(hasBinaryFields(fields));
+    const riskRows = validRows.filter(factor.isRisk);
+    const otherRows = validRows.filter(d => !factor.isRisk(d));
+    const riskPct = weightedPercent(riskRows, d => d.QN84 === YES, hasBinaryFields(["QN84"]));
+    const otherPct = weightedPercent(otherRows, d => d.QN84 === YES, hasBinaryFields(["QN84"]));
+
+    return {
+      ...factor,
+      active: riskSelected.has(factor.key),
+      validN: validRows.length,
+      riskPct,
+      otherPct,
+      gap: +(riskPct - otherPct).toFixed(1),
+    };
+  }).sort((a, b) => b.gap - a.gap);
+}
+
+function drawRiskRole(data) {
+  d3.select("#risk-role-chart").selectAll("*").remove();
+
+  const rows = computeRiskRoleRows(data);
+  const margin = { top: 28, right: 100, bottom: 46, left: 164 };
+  const W = 620, H = rows.length * 54 + margin.top + margin.bottom;
+  const iw = W - margin.left - margin.right;
+  const ih = H - margin.top - margin.bottom;
+
+  const svg = d3.select("#risk-role-chart")
+    .append("svg")
+    .attr("viewBox", `0 0 ${W} ${H}`)
+    .attr("width", "100%")
+    .style("max-width", "700px")
+    .style("display", "block")
+    .style("overflow", "visible");
+
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+  const x = d3.scaleLinear()
+    .domain([0, Math.max(10, d3.max(rows, d => d.gap) || 0)])
+    .nice()
+    .range([0, iw]);
+  const y = d3.scaleBand()
+    .domain(rows.map(d => d.key))
+    .range([0, ih])
+    .padding(0.36);
+
+  const tip = d3.select("body").selectAll(".risk-role-tooltip").data([1])
+    .join("div").attr("class", "risk-role-tooltip dot-tooltip");
+
+  g.append("g")
+    .attr("class", "grid")
+    .call(d3.axisBottom(x).ticks(5).tickSize(ih).tickFormat(""))
+    .selectAll("line").style("stroke", "#eceff4");
+  g.select(".grid .domain").remove();
+
+  g.append("g")
+    .attr("transform", `translate(0,${ih})`)
+    .call(d3.axisBottom(x).ticks(5).tickFormat(d => `+${d} pp`))
+    .selectAll("text").style("font-size", "11px");
+  g.selectAll(".domain").style("display", "none");
+
+  const row = g.selectAll(".risk-role-row")
+    .data(rows, d => d.key)
+    .join("g")
+    .attr("class", "risk-role-row")
+    .attr("opacity", d => d.active ? 1 : 0.36)
+    .attr("transform", d => `translate(0,${y(d.key)})`)
+    .style("cursor", "pointer")
+    .on("click", (_event, d) => {
+      if (riskSelected.has(d.key) && riskSelected.size === 1) return;
+      if (riskSelected.has(d.key)) riskSelected.delete(d.key);
+      else riskSelected.add(d.key);
+      renderRiskSelector(data);
+      updateRiskProfiler(data);
+    });
+
+  row.append("text")
+    .attr("x", -12)
+    .attr("y", y.bandwidth() / 2)
+    .attr("dy", "0.35em")
+    .attr("text-anchor", "end")
+    .style("font-size", "13px")
+    .style("fill", "#333")
+    .text(d => d.label);
+
+  row.append("rect")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("width", d => x(Math.max(0, d.gap)))
+    .attr("height", y.bandwidth())
+    .attr("rx", 4)
+    .attr("fill", "#e15759")
+    .attr("fill-opacity", 0.72)
+    .on("mouseover", (_event, d) => {
+      tip.style("opacity", 1)
+        .html(`<strong>${d.label}</strong><br>Risk present: ${d.riskPct}%<br>Risk absent: ${d.otherPct}%<br>Gap: +${d.gap} pp<br>Valid n: ${d.validN.toLocaleString()}`);
+    })
+    .on("mousemove", event => {
+      tip.style("left", (event.pageX + 12) + "px").style("top", (event.pageY - 50) + "px");
+    })
+    .on("mouseout", () => tip.style("opacity", 0));
+
+  row.append("text")
+    .attr("x", d => x(Math.max(0, d.gap)) + 8)
+    .attr("y", y.bandwidth() / 2)
+    .attr("dy", "0.35em")
+    .style("font-size", "12px")
+    .style("font-weight", "700")
+    .style("fill", "#333")
+    .text(d => `+${d.gap} pp`);
+
+  g.append("text")
+    .attr("x", iw / 2)
+    .attr("y", ih + 38)
+    .attr("text-anchor", "middle")
+    .style("font-size", "12px")
+    .style("fill", "#555")
+    .text("Poor mental-health gap: risk present minus risk absent");
+}
+
+// ═══════════════════════════════════════════════════════════
+// SECTION 5 — Relationships, consent, and sexual health
+// ═══════════════════════════════════════════════════════════
+const SEXUAL_SAFETY_FACTORS = [
+  {
+    label: "Sexual dating violence",
+    denominator: "students who dated",
+    valid: d => ["2", "3", "4", "5", "6"].includes(d.Q21),
+    isRisk: d => ["3", "4", "5", "6"].includes(d.Q21),
+  },
+  {
+    label: "Ever forced sexual intercourse",
+    denominator: "students with valid response",
+    valid: hasCodes("Q19", ["1", "2"]),
+    isRisk: d => d.Q19 === YES,
+  },
+  {
+    label: "Sexual violence",
+    denominator: "students with valid response",
+    valid: hasCodes("Q20", ["1", "2", "3", "4", "5"]),
+    isRisk: d => ["2", "3", "4", "5"].includes(d.Q20),
+  },
+  {
+    label: "Physical dating violence",
+    denominator: "students who dated",
+    valid: d => ["2", "3", "4", "5", "6"].includes(d.Q22),
+    isRisk: d => ["3", "4", "5", "6"].includes(d.Q22),
+  },
+  {
+    label: "Alcohol/drugs before sex",
+    denominator: "students with valid last-sex response",
+    valid: hasCodes("Q60", ["2", "3"]),
+    isRisk: d => d.Q60 === "2",
+  },
+];
+
+const SEXUAL_PREVENTION_METRICS = [
+  {
+    label: "Any birth-control method",
+    valid: hasCodes("Q62", ["2", "3", "4", "5", "6", "7", "8"]),
+    hit: d => ["3", "4", "5", "6", "7"].includes(d.Q62),
+  },
+  {
+    label: "Consent verbally asked",
+    valid: hasCodes("Q94", ["2", "3"]),
+    hit: d => d.Q94 === "2",
+  },
+  {
+    label: "No alcohol/drugs before sex",
+    valid: hasCodes("Q60", ["2", "3"]),
+    hit: d => d.Q60 === "3",
+  },
+  {
+    label: "Condom used",
+    valid: hasCodes("Q61", ["2", "3"]),
+    hit: d => d.Q61 === "2",
+  },
+  {
+    label: "HIV tested",
+    valid: hasCodes("Q81", ["1", "2", "3"]),
+    hit: d => d.Q81 === YES,
+  },
+  {
+    label: "STD tested",
+    valid: hasCodes("Q82", ["1", "2", "3"]),
+    hit: d => d.Q82 === YES,
+  },
+];
+
+function isCurrentlySexuallyActive(d) {
+  return ["3", "4", "5", "6", "7", "8"].includes(d.Q59);
+}
+
+function computeSexualGapRows(data) {
+  return SEXUAL_SAFETY_FACTORS.map(factor => {
+    const validRows = data.filter(d => factor.valid(d) && isBinary(d, "QN84") && weightOf(d));
+    const riskRows = validRows.filter(factor.isRisk);
+    const otherRows = validRows.filter(d => !factor.isRisk(d));
+    const riskPct = weightedPercent(riskRows, d => d.QN84 === YES, hasBinaryFields(["QN84"]));
+    const otherPct = weightedPercent(otherRows, d => d.QN84 === YES, hasBinaryFields(["QN84"]));
+
+    return {
+      ...factor,
+      riskPct,
+      otherPct,
+      gap: +(riskPct - otherPct).toFixed(1),
+      validN: validRows.length,
+      riskN: riskRows.length,
+    };
+  }).sort((a, b) => b.gap - a.gap);
+}
+
+function computeSexualPreventionRows(data) {
+  const activeRows = data.filter(d => isCurrentlySexuallyActive(d));
+  return SEXUAL_PREVENTION_METRICS.map(metric => ({
+    ...metric,
+    ...weightedStat(activeRows, metric.hit, metric.valid),
+  }));
+}
+
+function drawSexualHealth(data) {
+  const activeStat = weightedStat(data, isCurrentlySexuallyActive, hasCodes("Q59", ["1", "2", "3", "4", "5", "6", "7", "8"]));
+  const violenceStat = weightedStat(
+    data,
+    d => ["2", "3", "4", "5"].includes(d.Q20),
+    hasCodes("Q20", ["1", "2", "3", "4", "5"])
+  );
+  const gapRows = computeSexualGapRows(data);
+  const topGap = gapRows[0];
+
+  d3.select("#sexual-summary").html(`
+    <div class="sexual-summary-card">
+      <span class="sexual-summary-value">${activeStat.pct}%</span>
+      <span class="sexual-summary-label">currently sexually active, weighted</span>
+    </div>
+    <div class="sexual-summary-card">
+      <span class="sexual-summary-value">${violenceStat.pct}%</span>
+      <span class="sexual-summary-label">reported sexual violence at least once</span>
+    </div>
+    <div class="sexual-summary-card">
+      <span class="sexual-summary-value">+${topGap.gap} pp</span>
+      <span class="sexual-summary-label">largest poor-mental-health gap: ${topGap.label}</span>
+    </div>
+  `);
+
+  drawSexualGapChart(gapRows);
+  drawSexualPreventionChart(computeSexualPreventionRows(data));
+}
+
+function drawSexualGapChart(rows) {
+  d3.select("#sexual-gap-chart").selectAll("*").remove();
+
+  const margin = { top: 24, right: 90, bottom: 50, left: 172 };
+  const W = 720, H = rows.length * 50 + margin.top + margin.bottom;
+  const iw = W - margin.left - margin.right;
+  const ih = H - margin.top - margin.bottom;
+
+  const svg = d3.select("#sexual-gap-chart")
+    .append("svg")
+    .attr("viewBox", `0 0 ${W} ${H}`)
+    .attr("width", "100%")
+    .style("max-width", "780px")
+    .style("display", "block")
+    .style("overflow", "visible");
+
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+  const x = d3.scaleLinear()
+    .domain([0, Math.max(10, d3.max(rows, d => d.gap) || 0)])
+    .nice()
+    .range([0, iw]);
+  const y = d3.scaleBand()
+    .domain(rows.map(d => d.label))
+    .range([0, ih])
+    .padding(0.36);
+
+  const tip = d3.select("body").selectAll(".sexual-gap-tooltip").data([1])
+    .join("div").attr("class", "sexual-gap-tooltip dot-tooltip");
+
+  g.append("g")
+    .attr("class", "grid")
+    .call(d3.axisBottom(x).ticks(5).tickSize(ih).tickFormat(""))
+    .selectAll("line").style("stroke", "#eef1f6");
+  g.select(".grid .domain").remove();
+
+  g.append("g")
+    .attr("transform", `translate(0,${ih})`)
+    .call(d3.axisBottom(x).ticks(5).tickFormat(d => `+${d} pp`))
+    .selectAll("text").style("font-size", "11px");
+  g.selectAll(".domain").style("display", "none");
+
+  const row = g.selectAll(".sexual-gap-row")
+    .data(rows, d => d.label)
+    .join("g")
+    .attr("class", "sexual-gap-row")
+    .attr("transform", d => `translate(0,${y(d.label)})`);
+
+  row.append("text")
+    .attr("x", -12)
+    .attr("y", y.bandwidth() / 2)
+    .attr("dy", "0.35em")
+    .attr("text-anchor", "end")
+    .style("font-size", "13px")
+    .style("fill", "#333")
+    .text(d => d.label);
+
+  row.append("rect")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("width", d => x(Math.max(0, d.gap)))
+    .attr("height", y.bandwidth())
+    .attr("rx", 4)
+    .attr("fill", "#b84a62")
+    .attr("fill-opacity", 0.78)
+    .on("mouseover", (_event, d) => {
+      tip.style("opacity", 1)
+        .html(`<strong>${d.label}</strong><br>Poor mental health if present: ${d.riskPct}%<br>Absent / comparison: ${d.otherPct}%<br>Gap: +${d.gap} pp<br>Denominator: ${d.denominator}<br>Valid n: ${d.validN.toLocaleString()}`);
+    })
+    .on("mousemove", event => {
+      tip.style("left", (event.pageX + 12) + "px").style("top", (event.pageY - 60) + "px");
+    })
+    .on("mouseout", () => tip.style("opacity", 0));
+
+  row.append("text")
+    .attr("x", d => x(Math.max(0, d.gap)) + 8)
+    .attr("y", y.bandwidth() / 2)
+    .attr("dy", "0.35em")
+    .style("font-size", "12px")
+    .style("font-weight", "700")
+    .style("fill", "#333")
+    .text(d => `+${d.gap} pp`);
+
+  g.append("text")
+    .attr("x", iw / 2)
+    .attr("y", ih + 40)
+    .attr("text-anchor", "middle")
+    .style("font-size", "12px")
+    .style("fill", "#555")
+    .text("Poor mental-health gap: present minus absent / comparison");
+}
+
+function drawSexualPreventionChart(rows) {
+  d3.select("#sexual-prevention-chart").selectAll("*").remove();
+
+  const margin = { top: 24, right: 72, bottom: 50, left: 172 };
+  const W = 700, H = rows.length * 46 + margin.top + margin.bottom;
+  const iw = W - margin.left - margin.right;
+  const ih = H - margin.top - margin.bottom;
+
+  const svg = d3.select("#sexual-prevention-chart")
+    .append("svg")
+    .attr("viewBox", `0 0 ${W} ${H}`)
+    .attr("width", "100%")
+    .style("max-width", "760px")
+    .style("display", "block")
+    .style("overflow", "visible");
+
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+  const x = d3.scaleLinear().domain([0, 100]).range([0, iw]);
+  const y = d3.scaleBand().domain(rows.map(d => d.label)).range([0, ih]).padding(0.32);
+  const tip = d3.select("body").selectAll(".sexual-prevention-tooltip").data([1])
+    .join("div").attr("class", "sexual-prevention-tooltip dot-tooltip");
+
+  g.append("g")
+    .attr("class", "grid")
+    .call(d3.axisBottom(x).ticks(5).tickSize(ih).tickFormat(""))
+    .selectAll("line").style("stroke", "#eef1f6");
+  g.select(".grid .domain").remove();
+
+  g.append("g")
+    .attr("transform", `translate(0,${ih})`)
+    .call(d3.axisBottom(x).ticks(5).tickFormat(d => `${d}%`))
+    .selectAll("text").style("font-size", "11px");
+  g.selectAll(".domain").style("display", "none");
+
+  const row = g.selectAll(".sexual-prevention-row")
+    .data(rows, d => d.label)
+    .join("g")
+    .attr("class", "sexual-prevention-row")
+    .attr("transform", d => `translate(0,${y(d.label)})`);
+
+  row.append("text")
+    .attr("x", -12)
+    .attr("y", y.bandwidth() / 2)
+    .attr("dy", "0.35em")
+    .attr("text-anchor", "end")
+    .style("font-size", "13px")
+    .style("fill", "#333")
+    .text(d => d.label);
+
+  row.append("rect")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("width", d => x(d.pct))
+    .attr("height", y.bandwidth())
+    .attr("rx", 4)
+    .attr("fill", "#4e79a7")
+    .attr("fill-opacity", 0.78)
+    .on("mouseover", (_event, d) => {
+      tip.style("opacity", 1)
+        .html(`<strong>${d.label}</strong><br>${d.pct}% among currently sexually active students<br>Valid n: ${d.validN.toLocaleString()}<br>Missing in active denominator: ${d.missingPct}%`);
+    })
+    .on("mousemove", event => {
+      tip.style("left", (event.pageX + 12) + "px").style("top", (event.pageY - 50) + "px");
+    })
+    .on("mouseout", () => tip.style("opacity", 0));
+
+  row.append("text")
+    .attr("x", d => x(d.pct) + 8)
+    .attr("y", y.bandwidth() / 2)
+    .attr("dy", "0.35em")
+    .style("font-size", "12px")
+    .style("font-weight", "700")
+    .style("fill", "#333")
+    .text(d => `${d.pct}%`);
+
+  g.append("text")
+    .attr("x", iw / 2)
+    .attr("y", ih + 40)
+    .attr("text-anchor", "middle")
+    .style("font-size", "12px")
+    .style("fill", "#555")
+    .text("Weighted percent among currently sexually active students");
+}
+
+// ═══════════════════════════════════════════════════════════
+// SECTION 6 — Correlation bar chart: metrics vs addiction
+// ═══════════════════════════════════════════════════════════
+const PHONE_METRICS = {
+  Daily_Usage_Hours:      { label: "Daily usage (hrs)", higherBad: true },
+  Phone_Checks_Per_Day:   { label: "Phone checks / day", higherBad: true },
+  Time_on_Social_Media:   { label: "Social media time", higherBad: true },
+  Weekend_Usage_Hours:    { label: "Weekend usage (hrs)", higherBad: true },
+  Sleep_Hours:            { label: "Sleep (hrs)", higherBad: false },
+  Anxiety_Level:          { label: "Anxiety", higherBad: true },
+  Depression_Level:       { label: "Depression", higherBad: true },
+  Exercise_Hours:         { label: "Exercise (hrs)", higherBad: false },
+  Self_Esteem:            { label: "Self-esteem", higherBad: false },
+  Academic_Performance:   { label: "Academic performance", higherBad: false },
+  Social_Interactions:    { label: "Social interactions", higherBad: false },
+};
+
+const PHONE_CORRELATION_KEYS = [
+  "Daily_Usage_Hours",
+  "Phone_Checks_Per_Day",
+  "Time_on_Social_Media",
+  "Weekend_Usage_Hours",
+  "Sleep_Hours",
+  "Anxiety_Level",
+  "Depression_Level",
+  "Exercise_Hours",
+  "Self_Esteem",
+  "Academic_Performance",
+];
+
+function metricLabel(key) {
+  return PHONE_METRICS[key]?.label ?? key;
+}
+
 function pearsonR(xs, ys) {
-  const mx = d3.mean(xs), my = d3.mean(ys);
-  const num = d3.sum(xs.map((x, i) => (x - mx) * (ys[i] - my)));
-  const den = Math.sqrt(d3.sum(xs.map(x => (x - mx) ** 2)) * d3.sum(ys.map(y => (y - my) ** 2)));
+  const pairs = xs.map((x, i) => [x, ys[i]])
+    .filter(([x, y]) => Number.isFinite(x) && Number.isFinite(y));
+  const cleanXs = pairs.map(d => d[0]);
+  const cleanYs = pairs.map(d => d[1]);
+  const mx = d3.mean(cleanXs), my = d3.mean(cleanYs);
+  const num = d3.sum(cleanXs.map((x, i) => (x - mx) * (cleanYs[i] - my)));
+  const den = Math.sqrt(d3.sum(cleanXs.map(x => (x - mx) ** 2)) * d3.sum(cleanYs.map(y => (y - my) ** 2)));
   return den === 0 ? 0 : num / den;
 }
 
-function drawHeatmap(data) {
+function drawCorrelationChart(data) {
   d3.select("#heatmap-chart").selectAll("*").remove();
 
   const addiction = data.map(d => d.Addiction_Level);
 
-  const METRICS = [
-    { key: "Phone_Checks_Per_Day", label: "Phone checks / day", higherBad: true  },
-    { key: "Sleep_Hours",          label: "Sleep (hrs)",         higherBad: false },
-    { key: "Anxiety_Level",        label: "Anxiety",             higherBad: true  },
-    { key: "Depression_Level",     label: "Depression",          higherBad: true  },
-    { key: "Exercise_Hours",       label: "Exercise (hrs)",      higherBad: false },
-    { key: "Self_Esteem",          label: "Self-Esteem",         higherBad: false },
-  ];
-
   // Compute r and sort by |r| descending
-  const corrs = METRICS.map(m => ({
-    ...m,
-    r: pearsonR(addiction, data.map(d => d[m.key])),
+  const corrs = PHONE_CORRELATION_KEYS.map(key => ({
+    key,
+    label: metricLabel(key),
+    higherBad: PHONE_METRICS[key].higherBad,
+    r: pearsonR(addiction, data.map(d => d[key])),
   })).sort((a, b) => Math.abs(b.r) - Math.abs(a.r));
 
-  const margin = { top: 16, right: 90, bottom: 40, left: 160 };
-  const W = 560, H = corrs.length * 46 + margin.top + margin.bottom;
+  const strongest = corrs[0];
+  const protective = corrs.find(d => d.r < 0 && !d.higherBad) || corrs.find(d => d.r > 0 && d.higherBad);
+  d3.select("#phone-corr-summary").html(`
+    <div class="phone-summary-card">
+      <span class="phone-summary-value">${strongest.label}</span>
+      <span class="phone-summary-label">strongest absolute correlation, r = ${strongest.r.toFixed(2)}</span>
+    </div>
+    <div class="phone-summary-card">
+      <span class="phone-summary-value">${protective.label}</span>
+      <span class="phone-summary-label">largest concerning direction among displayed metrics</span>
+    </div>
+  `);
+
+  const margin = { top: 20, right: 118, bottom: 86, left: 174 };
+  const W = 760, H = corrs.length * 38 + margin.top + margin.bottom;
   const iw = W - margin.left - margin.right;
   const ih = H - margin.top - margin.bottom;
 
@@ -643,13 +1600,14 @@ function drawHeatmap(data) {
     .append("svg")
     .attr("viewBox", `0 0 ${W} ${H}`)
     .attr("width", "100%")
-    .style("max-width", "620px")
+    .style("max-width", "880px")
     .style("display", "block")
     .style("overflow", "visible");
 
   const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
-  const x = d3.scaleLinear().domain([-0.35, 0.35]).range([0, iw]);
+  const maxAbs = Math.max(0.1, d3.max(corrs, d => Math.abs(d.r)) || 0);
+  const x = d3.scaleLinear().domain([-maxAbs * 1.18, maxAbs * 1.18]).nice().range([0, iw]);
   const y = d3.scaleBand().domain(corrs.map(d => d.label)).range([0, ih]).padding(0.3);
 
   // Zero line
@@ -658,13 +1616,11 @@ function drawHeatmap(data) {
     .attr("y1", 0).attr("y2", ih)
     .attr("stroke", "#999").attr("stroke-width", 1.5);
 
-  // Reference lines at ±0.2
-  [-0.2, 0.2].forEach(v => {
-    g.append("line")
-      .attr("x1", x(v)).attr("x2", x(v))
-      .attr("y1", 0).attr("y2", ih)
-      .attr("stroke", "#ddd").attr("stroke-dasharray", "4,3").attr("stroke-width", 1);
-  });
+  g.append("g")
+    .attr("class", "grid")
+    .call(d3.axisBottom(x).ticks(6).tickSize(ih).tickFormat(""))
+    .selectAll("line").style("stroke", "#eef1f6");
+  g.select(".grid .domain").remove();
 
   // X-axis
   g.append("g")
@@ -675,7 +1631,7 @@ function drawHeatmap(data) {
 
   // Axis label
   g.append("text")
-    .attr("x", iw / 2).attr("y", ih + 34)
+    .attr("x", iw / 2).attr("y", ih + 38)
     .attr("text-anchor", "middle")
     .style("font-size", "12px").style("fill", "#555")
     .text("Pearson r with Addiction Level");
@@ -700,6 +1656,7 @@ function drawHeatmap(data) {
       .attr("height", y.bandwidth())
       .attr("fill", barColor)
       .attr("rx", 3)
+      .attr("fill-opacity", 0.78)
       .on("mouseover", () => tip.style("opacity", 1)
         .html(`<strong>${d.label}</strong><br>r = ${d.r.toFixed(3)}`))
       .on("mousemove", ev => tip
@@ -726,163 +1683,9 @@ function drawHeatmap(data) {
   });
 
   // Legend
-  const leg = svg.append("g").attr("transform", `translate(${margin.left}, ${H - 14})`);
-  [["#e15759","Higher addiction → worse"], ["#59a14f","Higher addiction → better"]].forEach(([col, lbl], i) => {
-    leg.append("rect").attr("x", i * 230).attr("y", 0).attr("width", 12).attr("height", 12).attr("fill", col).attr("rx", 2);
-    leg.append("text").attr("x", i * 230 + 16).attr("y", 10).style("font-size", "11px").style("fill", "#555").text(lbl);
+  const leg = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top + ih + 58})`);
+  [["#e15759","Higher addiction -> worse"], ["#59a14f","Higher addiction -> better"]].forEach(([col, lbl], i) => {
+    leg.append("rect").attr("x", i * 245).attr("y", 0).attr("width", 12).attr("height", 12).attr("fill", col).attr("rx", 2);
+    leg.append("text").attr("x", i * 245 + 16).attr("y", 10).style("font-size", "11px").style("fill", "#555").text(lbl);
   });
-}
-
-// ═══════════════════════════════════════════════════════════
-// SECTION 5 — Scatter: daily usage vs anxiety
-// ═══════════════════════════════════════════════════════════
-function drawScatter(data) {
-  d3.select("#scatter-chart").selectAll("*").remove();
-
-  const margin = { top: 20, right: 140, bottom: 55, left: 55 };
-  const W = 560, H = 360;
-  const iw = W - margin.left - margin.right;
-  const ih = H - margin.top - margin.bottom;
-
-  const svg = d3.select("#scatter-chart")
-    .append("svg").attr("width", W).attr("height", H);
-
-  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-
-  const x = d3.scaleLinear().domain(d3.extent(data, d => d.Daily_Usage_Hours)).nice().range([0, iw]);
-  const y = d3.scaleLinear().domain(d3.extent(data, d => d.Anxiety_Level)).nice().range([ih, 0]);
-
-  function addictionGroup(v) {
-    if (v <= 3) return "Low";
-    if (v <= 6) return "Medium";
-    return "High";
-  }
-
-  const colorScale = d3.scaleOrdinal()
-    .domain(["Low","Medium","High"])
-    .range(["#59a14f","#f28e2b","#e15759"]);
-
-  // Tooltip div
-  const tooltip = d3.select("body").selectAll(".scatter-tooltip").data([1])
-    .join("div").attr("class", "scatter-tooltip")
-    .style("position", "absolute").style("background", "rgba(0,0,0,0.75)")
-    .style("color", "#fff").style("padding", "6px 10px").style("border-radius", "5px")
-    .style("font-size", "12px").style("pointer-events", "none").style("opacity", 0);
-
-  g.selectAll("circle")
-    .data(data)
-    .join("circle")
-    .attr("cx", d => x(d.Daily_Usage_Hours))
-    .attr("cy", d => y(d.Anxiety_Level))
-    .attr("r", 4)
-    .attr("fill", d => colorScale(addictionGroup(d.Addiction_Level)))
-    .attr("fill-opacity", 0.7)
-    .attr("stroke", "#fff")
-    .attr("stroke-width", 0.5)
-    .on("mouseover", (_event, d) => {
-      tooltip.style("opacity", 1)
-        .html(`Usage: ${d.Daily_Usage_Hours}h<br>Anxiety: ${d.Anxiety_Level}<br>Addiction: ${d.Addiction_Level}`);
-    })
-    .on("mousemove", event => {
-      tooltip.style("left", (event.pageX + 12) + "px").style("top", (event.pageY - 28) + "px");
-    })
-    .on("mouseout", () => tooltip.style("opacity", 0));
-
-  g.append("g").attr("transform", `translate(0,${ih})`).call(d3.axisBottom(x).ticks(7));
-  g.append("g").call(d3.axisLeft(y).ticks(6));
-
-  // Axis labels
-  g.append("text").attr("x", iw / 2).attr("y", ih + 42)
-    .attr("text-anchor", "middle").style("font-size", "12px").text("Daily Phone Usage (hours)");
-
-  g.append("text").attr("transform", "rotate(-90)").attr("x", -ih / 2).attr("y", -42)
-    .attr("text-anchor", "middle").style("font-size", "12px").text("Anxiety Level");
-
-  // Legend
-  const legend = svg.append("g").attr("transform", `translate(${W - margin.right + 16}, ${margin.top + 10})`);
-  legend.append("text").attr("y", -8).style("font-size", "11px").style("font-weight", "600").text("Addiction");
-  ["Low","Medium","High"].forEach((grp, i) => {
-    legend.append("circle").attr("cx", 6).attr("cy", i * 20 + 6).attr("r", 5).attr("fill", colorScale(grp));
-    legend.append("text").attr("x", 16).attr("y", i * 20 + 10).style("font-size", "11px").text(grp);
-  });
-}
-
-// ═══════════════════════════════════════════════════════════
-// LEGACY phone charts (kept from first draft, polished)
-// ═══════════════════════════════════════════════════════════
-function drawSummaryPhone(data) {
-  const n = data.length;
-  const avg = field => d3.mean(data, d => d[field]);
-
-  const highUsers  = data.filter(d => d.Daily_Usage_Hours >= 5).length;
-  const lowSleep   = data.filter(d => d.Sleep_Hours < 6).length;
-
-  d3.select("#summary-phone").html(`
-    <div class="stat-grid">
-      <div class="stat-card"><span class="stat-num">${n}</span><span class="stat-label">Students</span></div>
-      <div class="stat-card"><span class="stat-num">${avg("Daily_Usage_Hours").toFixed(1)}h</span><span class="stat-label">Avg daily usage</span></div>
-      <div class="stat-card"><span class="stat-num">${avg("Sleep_Hours").toFixed(1)}h</span><span class="stat-label">Avg sleep</span></div>
-      <div class="stat-card"><span class="stat-num">${avg("Anxiety_Level").toFixed(1)}</span><span class="stat-label">Avg anxiety</span></div>
-      <div class="stat-card"><span class="stat-num">${avg("Addiction_Level").toFixed(1)}</span><span class="stat-label">Avg addiction score</span></div>
-      <div class="stat-card"><span class="stat-num">${(highUsers/n*100).toFixed(0)}%</span><span class="stat-label">High users ≥5h/day</span></div>
-      <div class="stat-card"><span class="stat-num">${(lowSleep/n*100).toFixed(0)}%</span><span class="stat-label">Low sleep &lt;6h</span></div>
-    </div>
-  `);
-}
-
-function getUsageGroup(d) {
-  if (d.Daily_Usage_Hours < 2) return "Low (<2h)";
-  if (d.Daily_Usage_Hours < 5) return "Medium (2–5h)";
-  return "High (≥5h)";
-}
-
-function drawBarChartPhone(data, option) {
-  d3.select("#bar-chart-phone").selectAll("*").remove();
-
-  let counts, xLabel, yLabel;
-
-  if (option === "A") {
-    counts = d3.rollups(data, v => d3.mean(v, d => d.Daily_Usage_Hours), d => d.Addiction_Level)
-      .sort((a, b) => a[0] - b[0])
-      .map(([k, v]) => ({ key: String(k), val: v }));
-    xLabel = "Addiction Level";
-    yLabel = "Avg Daily Usage (hrs)";
-  } else {
-    const order = ["Low (<2h)","Medium (2–5h)","High (≥5h)"];
-    counts = d3.rollups(data, v => d3.mean(v, d => d.Anxiety_Level), d => getUsageGroup(d))
-      .sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]))
-      .map(([k, v]) => ({ key: k, val: v }));
-    xLabel = "Usage Group";
-    yLabel = "Avg Anxiety Level";
-  }
-
-  const margin = { top: 20, right: 20, bottom: 55, left: 55 };
-  const W = 460, H = 320;
-  const iw = W - margin.left - margin.right;
-  const ih = H - margin.top - margin.bottom;
-
-  const svg = d3.select("#bar-chart-phone")
-    .append("svg").attr("width", W).attr("height", H);
-
-  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-
-  const x = d3.scaleBand().domain(counts.map(d => d.key)).range([0, iw]).padding(0.25);
-  const y = d3.scaleLinear().domain([0, d3.max(counts, d => d.val)]).nice().range([ih, 0]);
-
-  g.selectAll("rect").data(counts).join("rect")
-    .attr("x", d => x(d.key)).attr("y", d => y(d.val))
-    .attr("width", x.bandwidth()).attr("height", d => ih - y(d.val))
-    .attr("fill", (_d, i) => d3.schemeTableau10[i % 10])
-    .attr("rx", 3);
-
-  g.append("g").attr("transform", `translate(0,${ih})`).call(d3.axisBottom(x))
-    .selectAll("text").attr("transform", "rotate(-30)").style("text-anchor", "end").style("font-size", "11px");
-
-  g.append("g").call(d3.axisLeft(y).ticks(5));
-
-  g.append("text").attr("x", iw / 2).attr("y", ih + 48)
-    .attr("text-anchor", "middle").style("font-size", "12px").text(xLabel);
-
-  g.append("text").attr("transform", "rotate(-90)").attr("x", -ih / 2).attr("y", -42)
-    .attr("text-anchor", "middle").style("font-size", "12px").text(yLabel);
 }

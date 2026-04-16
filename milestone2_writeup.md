@@ -1,155 +1,220 @@
 # Milestone 2 Write-up
-## Teen Health Profile Dashboard — COM-480 Data Visualization
+## Teen Health Profile: From Survey Orientation To Deeper YRBS Patterns
 
-**Team:** Rui Yang (294952), Shuli Cécile Jia (316620), Christos Konstantinidis (347437)
-**Deadline:** Friday 17 April 2026, 5 pm
-
----
+- **Team:** Rui Yang (294952), Shuli Cecile Jia (316620), Christos Konstantinidis (347437)
+- **Course:** COM-480 Data Visualization
+- **Deadline:** Friday 17 April 2026, 5 pm
 
 ## Project Goal
 
-We are building an interactive web dashboard that communicates the breadth of adolescent health in the United States, using the 2023 CDC Youth Risk Behavior Survey (YRBS, n = 20,103) as the primary dataset and the Teen Phone Addiction dataset (Kaggle, n = 700) as a supplementary lens on digital behavior. The target audience is anyone interested in youth well-being — classmates, instructors, educators, or general readers — who want to move beyond single-topic health reports and see how mental health, sleep, physical activity, substance use, and safety connect in one coherent profile.
+We are building an interactive web visualization that profiles adolescent health in the United States using the 2023 CDC Youth Risk Behavior Survey (YRBS, 20,103 student rows) as the primary dataset. The central question is:
 
----
+**What portrait of teen health appears when mental wellbeing, daily routines, school support, substance use, and relationship safety are viewed together instead of one issue at a time?**
 
-## Visualization Sketches and Tools
+The intended reader is a classmate, instructor, educator, public-health reader, or general audience member who wants a compact but nuanced picture of teen health. The story is descriptive, not causal. We do not claim that one factor causes another; we show which concerns are common, which profiles differ across groups, and which risks most clearly separate poor current mental health.
 
-### 1. Demographic Overview (bar charts)
+The final design is organized as a guided discovery. It starts with demographics and simple national signals, then moves toward more interpretive findings: grade shifts, individual mental-health gaps, risk accumulation, and relationship-safety patterns. The Teen Phone Addiction dataset remains a secondary context layer so the project does not collapse teen health into a phone-use story.
 
-```
-Age distribution          Sex split           Grade distribution
-┌─────────────────┐        ┌──────────┐        ┌──────────────────┐
-│ ██              │        │  ████    │        │ ████             │
-│ ████            │        │  ████    │        │ ████             │
-│ █████           │        │  Male    │        │ ████             │
-│ █████           │        │  Female  │        │ ████             │
-│ ████            │        └──────────┘        │ 9  10  11  12    │
-│ 14 15 16 17 18+ │                            └──────────────────┘
-└─────────────────┘
-```
+## Narrative And Findings
 
-**Tool:** D3.js — `scaleBand`, `scaleLinear`, `axisBottom`, `axisLeft`.
-**Lectures needed:** Lecture 3 (Marks and Channels), Lecture 4 (Data and Scales).
+The website follows a ladder from shallow to more insightful:
 
----
+| Step | Reader question | Main message |
+| --- | --- | --- |
+| 1. Orientation | Who is in the survey? | YRBS is a large structured survey; later percentages use survey weights. |
+| 2. National scan | What are the obvious signals? | Mental health is prominent, but sleep, activity, safety, support, substance use, and relationship safety also matter. |
+| 3. First comparison | Whose profile differs? | Subgroups differ by profile shape, not a single healthy/unhealthy ranking. |
+| 4. Grade shift | What changes across high school? | Grade is a developmental axis: sleep declines while some substance-use indicators rise. |
+| 5. Risk role | Which factors separate mental health most? | Bullying and relationship-safety harms are stronger separators than some more visible lifestyle indicators. |
+| 6. Risk stack | What happens when problems accumulate? | Poor current mental health rises sharply as selected risks stack together. |
+| 7. Sexual health | How does it fit responsibly? | Sexual health belongs when framed through safety, consent, prevention, testing, and care. |
+| 8. Phone context | Is teen health just a phone story? | Phones matter, but YRBS shows a broader teen-health profile. |
 
-### 2. Health Domain Radar Chart (YRBS)
+Headline weighted findings from the YRBS data support this sequence: 39.72% of students felt sad or hopeless, 28.54% reported poor current mental health, only 23.20% got 8 or more hours of sleep, and 46.32% were active on at least 5 days. Sex differences are large on some indicators, such as poor current mental health among female students (38.76%) versus male students (18.83%). Across grade, sleep of 8+ hours falls from 30.99% in 9th grade to 18.09% in 12th grade, while current marijuana use rises from 10.83% to 24.53%.
 
-```
-          Good mental health
-                 *
-                /|\
-               / | \
-    School    /  |  \  Adequate
-    safety   *   |   *  sleep
-              \  |  /
-               \ | /
-                \|/
-         No      *      Physically
-       substance        active
-           use
-```
+The deeper findings are about separation and accumulation. Among the five risks used in the stack, the one-at-a-time poor-mental-health gaps are largest for being bullied at school (+21.8 percentage points), current substance use (+15.9 pp), low school connectedness (+15.1 pp), insufficient sleep (+13.8 pp), and physical inactivity (+7.0 pp). When all five selected risk fields are complete, poor current mental health rises from 8.28% among students with zero selected risks to 72.08% among students with all five. School connectedness has high missingness, so the prototype reports complete-case denominators for this view.
 
-Five axes (each 0–100 %): good mental health (Q107), adequate sleep ≥ 8 h (Q85), physically active 7 days/week (Q75), no marijuana/alcohol use (Q47+Q41), school safety — no weapon carried (Q14). A toggle switches between Male, Female, and an overlay of both.
+Sexual health is included as relationship safety and prevention, not as moral judgment. We avoid treating sexual activity itself as a risk. Instead, sexual activity defines denominators for prevention/agency indicators, while violence, coercion, and substance-linked sex are shown as safety concerns. For example, 11.37% reported sexual violence at least once, and sexual dating violence has a +33.0 pp poor-mental-health gap.
 
-**Tool:** D3.js — custom polar path generator, `scaleLinear` mapped to radius.
-**Lectures needed:** Lecture 5 (Perception, pre-attentive features), Lecture 9 (Advanced D3 — custom path generators).
+## Visualization Sketches, Tools, And Lectures
 
----
+### 1. Orientation: Who Are We Looking At?
 
-### 3. Health Indicator Bar Chart by Subgroup (YRBS)
+```text
+YRBS sample composition
 
-```
-        Sad/hopeless   Poor sleep   No activity  Substance use
- Male   ████
-Female  ████████
- 9th    ████
-12th    ██████
+Age     [bar chart]
+Sex     [bar chart]
+Grade   [bar chart]
+Race    [bar chart]
+
+Note: health percentages use WEIGHT, not raw bar counts.
 ```
 
-A grouped or faceted bar chart showing the percentage of students with a risk indicator, broken down by the selected demographic group (sex, grade, race/ethnicity). A dropdown controls which group to compare.
+- **Purpose:** Establish the survey population before making health claims.
+- **Tool:** D3.js bar charts with a lightweight cross-filter.
+- **Relevant lectures:** Marks and channels; data and scales; interaction.
 
-**Tool:** D3.js — `scaleBand` (outer + inner for grouping), color scale per group.
-**Lectures needed:** Lecture 4 (Scales), Lecture 6 (Color).
+### 2. Shallow Profile: National Teen-Health Signals
 
----
+```text
+National weighted profile
 
-### 4. Phone Usage × Wellbeing Heatmap (Teen Phone Addiction)
-
-```
-              Sleep  Anxiety  Depression  Self-Esteem  Exercise
- Low addict  [pale] [pale]   [pale]      [dark]       [pale]
- Med addict  [ .. ] [ .. ]   [ .. ]      [ .. ]       [ .. ]
-High addict  [dark] [dark]   [dark]      [pale]       [dark]
-```
-
-A matrix heatmap where rows are addiction-level groups (Low 1–3, Medium 4–6, High 7–10) and columns are wellbeing/behavioral metrics (avg sleep hours, avg anxiety, avg depression, avg self-esteem, avg exercise). Color encodes the average value, diverging or sequential depending on the metric direction.
-
-**Tool:** D3.js — `scaleSequential` with `interpolateRdYlGn` (inverted for risk metrics).
-**Lectures needed:** Lecture 6 (Color), Lecture 7 (Tabular data).
-
----
-
-### 5. Scatter Plot: Phone Usage vs. Anxiety (Teen Phone Addiction)
-
-```
-Anxiety
-  10 |           ·  · ··
-   8 |       · ·  ··  ···
-   6 |    ·· · ·   ·
-   4 | · ·   ·
-   2 |·
-     └──────────────────
-       1  2  3  4  5  6  7  Daily usage (h)
+Mental health        Poor current mental health     28.54%
+Daily routines       Sleep 8+ hours                 23.20%
+Activity             Active 5+ days                 46.32%
+Safety               Bullied at school              19.24%
+Substance use        Current alcohol                22.10%
+Relationship safety  Sexual violence                11.37%
 ```
 
-Each dot is one student. X-axis: daily phone usage hours. Y-axis: anxiety level. Color: addiction level (Low = blue, Medium = orange, High = red). A brush or hover tooltip shows individual details.
+- **Purpose:** Give readers the obvious national baseline before asking them to interpret group differences.
+- **Tool:** D3.js or static scorecard cards backed by weighted YRBS aggregation.
+- **Relevant lectures:** Marks and channels; data and scales; color.
 
-**Tool:** D3.js — `scaleLinear` for both axes, `scaleOrdinal` for color, `voronoi` or `mouseover` for tooltip.
-**Lectures needed:** Lecture 8 (Interaction and Brushing), Lecture 5 (Perception).
+### 3. First Comparison: Whose Profile Looks Different?
 
----
+```text
+Higher value = more common concern
 
-### Stretch / Planned for Milestone 3
+                       Female     Male
+Poor mental health       o---------o
+Insufficient sleep       o----o
+Inactive <5 days         o----------------o
+Bullied at school        o------o
+Current tobacco/EVP      o----o
+Current marijuana        o---o
+```
 
-- **US state choropleth** — if we obtain CDC state-level YRBS aggregates, map each indicator by state.
-- **Brushed timeline / parallel coordinates** — link demographic filter to all charts simultaneously.
-- **Animated transition** between subgroup comparisons on the radar chart.
+- **Purpose:** Show that subgroup differences have shape across domains rather than a single ranking.
+- **Tool:** D3.js dot plot with a demographic selector.
+- **Relevant lectures:** Data and scales; visual comparison; color; interaction.
 
----
+### 4. Profile Shift: How Health Changes Across High School
+
+```text
+9th grade                         12th grade
+
+Sleep 8+ hours      31.0%  ----------------> 18.1%
+Current marijuana   10.8%  ----------------> 24.5%
+Current tobacco     12.8%  ----------------> 23.2%
+Bullied at school   24.7%  ----------------> 14.0%
+```
+
+- **Purpose:** Turn grade from a filter into an insight: the teen-health profile changes as students move through high school.
+- **Tool:** D3.js line chart or slope chart over grade.
+- **Relevant lectures:** Visual comparison; annotation; data transformation.
+
+### 5. Individual Risk Role Around Mental Health
+
+```text
+Poor-current-mental-health gap
+
+Bullied at school            [================] +21.8 pp
+Current substance use        [===========     ] +15.9 pp
+Low school connectedness     [===========     ] +15.1 pp
+Insufficient sleep           [==========      ] +13.8 pp
+Physical inactivity          [=====           ]  +7.0 pp
+```
+
+- **Purpose:** Answer which selected risks separate poor current mental health most before showing accumulation.
+- **Tool:** D3.js ranked gap bars with tooltips for risk-present, risk-absent, gap, and valid `n`.
+- **Relevant lectures:** Data transformation; uncertainty and communication; perception.
+
+### 6. Risk Stack: Accumulated Problems
+
+```text
+Poor current mental health
+
+75% |                         *
+60% |
+45% |                    *
+30% |              *
+15% |    *    *
+ 0% +----+----+----+----+----+----
+      0    1    2    3    4    5
+      number of selected risks
+```
+
+- **Purpose:** Show the main insight: risks are not isolated, and poor mental health rises sharply when they accumulate.
+- **Tool:** D3.js interactive lollipop/bar chart with risk toggles and complete-case notes.
+- **Relevant lectures:** Interaction; data transformation; uncertainty and communication.
+
+### 7. Sexual Health: Safety, Consent, Prevention, And Care
+
+```text
+Relationship safety and poor mental health
+
+Sexual dating violence       [================] +33.0 pp
+Forced sexual intercourse    [==============  ] +29.7 pp
+Sexual violence              [=============   ] +27.7 pp
+Physical dating violence     [============    ] +25.3 pp
+Alcohol/drugs before sex     [========        ] +17.2 pp
+
+Among currently sexually active students
+
+Any birth-control method     [================] 83.4%
+Consent verbally asked       [=============== ] 82.2%
+No alcohol/drugs before sex  [=============== ] 81.7%
+Condom used                  [==========      ] 51.9%
+HIV tested                   [===             ] 14.9%
+STD tested                   [==              ] 12.6%
+```
+
+- **Purpose:** Include sexual health responsibly by focusing on safety, consent, prevention, testing, and access to care.
+- **Tool:** D3.js ranked gap bars and conditional prevention bars.
+- **Relevant lectures:** Filtering and conditional data; responsible visualization; uncertainty and missingness; color.
+
+### 8. Phone Context
+
+```text
+Phone / wellbeing metric      r with addiction level
+Phone checks / day            [=======]
+Daily usage                   [======]
+Sleep                         [---]
+Self-esteem                   [----]
+```
+
+- **Purpose:** Keep phone use as context while showing that the YRBS teen-health profile is broader.
+- **Tool:** D3.js ranked Pearson correlation bars from the Teen Phone Addiction dataset.
+- **Relevant lectures:** Correlation caveats; perception; color.
 
 ## Independent Implementation Pieces
 
-| # | Piece | Dataset | Chart type | Can be built independently |
-|---|-------|---------|-----------|---------------------------|
-| 1 | Demographic overview | YRBS | Bar (×3) | Yes |
-| 2 | Health domain radar | YRBS | Radar | Yes |
-| 3 | Subgroup bar chart | YRBS | Grouped bar | Yes (shares data load with #1) |
-| 4 | Wellbeing heatmap | Phone | Heatmap | Yes |
-| 5 | Usage × anxiety scatter | Phone | Scatter | Yes |
-| 6 | Cross-chart filter | Both | Interaction | Depends on #1–5 |
+| # | Piece | Dataset | Chart / feature | Independent? |
+|---|-------|---------|-----------------|--------------|
+| 1 | Data loading and weighted helpers | YRBS | Shared aggregation utilities | Yes |
+| 2 | Demographic orientation | YRBS | Bar charts and cross-filter | Yes |
+| 3 | National profile scan | YRBS | Weighted scorecard cards | Yes |
+| 4 | Subgroup profile comparison | YRBS | Dot plot with demographic selector | Yes |
+| 5 | Grade profile shift | YRBS | Grade line/slope chart | Yes |
+| 6 | Individual risk role | YRBS | Ranked mental-health gap chart | Yes |
+| 7 | Risk stack | YRBS | Risk-count chart with toggles | Depends on 6 for shared risk definitions |
+| 8 | Sexual-health module | YRBS | Safety gap and prevention/agency views | Yes |
+| 9 | Phone context | Kaggle phone dataset | Ranked correlation chart | Yes |
+| 10 | Cross-chart coordination | Both | Shared filters and highlights | Depends on 2-9 |
 
----
+## Minimum Viable Product
 
-## Minimum Viable Product (MVP)
+The MVP for Milestone 3 is the YRBS story through step 7:
 
-The core MVP is pieces **1, 2, and 5**: a demographic overview, the radar chart comparing Male vs. Female across five health domains, and the scatter plot linking phone usage to anxiety. Together these answer the two central questions of the project — what does the adolescent health profile look like across subgroups, and how does phone use relate to wellbeing — with at least three distinct chart types.
+1. Demographic orientation and weighted-survey note.
+2. National scorecard of obvious teen-health signals.
+3. Subgroup and grade profile comparison.
+4. Individual risk-role ranking.
+5. Interactive risk-stack chart.
+6. Sexual-health module framed around safety, consent, prevention, and care.
 
-Pieces 3 (grouped bar) and 4 (heatmap) enrich the story but can be dropped without breaking the narrative.
+These pieces answer the main project question even if the phone context, linked brushing, animation, and map ideas are reduced.
 
-Piece 6 (cross-chart filtering) is a Milestone 3 stretch goal.
+## Prototype Status
 
----
+The current prototype is in `milestone2/index.html` and uses D3.js with local CSV files under `milestone2/data/`. It now follows the planned reader flow: demographics first, then national signals, subgroup comparison, grade shift, risk role, risk accumulation, sexual health, and phone context. YRBS views use weighted percentages when reporting prevalence; the demographic orientation uses raw sample counts to show who is in the survey.
 
-## Lecture Mapping Summary
+## Stretch Ideas For Milestone 3
 
-| Lecture | Topic | Used in |
-|---------|-------|---------|
-| Lecture 3 | Marks and channels | All charts |
-| Lecture 4 | Data and scales | All charts |
-| Lecture 5 | Perception and pre-attentive features | Radar, scatter |
-| Lecture 6 | Color | Heatmap, scatter, bar |
-| Lecture 7 | Tabular data | Heatmap |
-| Lecture 8 | Interaction and brushing | Scatter tooltip, dropdown filter |
-| Lecture 9 | Advanced D3 | Radar path generator |
-| Lecture 10 | Maps and projections | (Stretch) Choropleth |
+- Add linked highlighting so a selected subgroup updates the national profile, dot plot, grade shift, and risk views together.
+- Add annotation callouts for the grade shift from sleep/bullying concerns toward substance-use concerns.
+- Add stronger missingness or denominator cues for school connectedness and sexual-health conditional views.
+- Keep the phone-use dataset as a clearly labeled secondary context story.
+- Add a state-level map only if comparable state-level YRBS aggregate data is available.

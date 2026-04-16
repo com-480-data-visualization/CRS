@@ -2,52 +2,71 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Teen Health Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teen Health Profile</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://d3js.org/d3.v7.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
 </head>
 <body>
 
 <header>
-  <h1>Teen Health Profile Dashboard</h1>
-  <p class="subtitle">2023 CDC Youth Risk Behavior Survey &amp; Teen Phone Addiction Dataset</p>
+  <p class="eyebrow">2023 CDC Youth Risk Behavior Survey</p>
+  <h1>Teen Health Profile</h1>
+  <p class="subtitle">A guided walk from survey orientation to national signals, subgroup profiles, grade shifts, risk accumulation, relationship safety, and phone context.</p>
 </header>
 
-<!-- ═══════════════════════════════════════════════════
-     SECTION 1: YRBS DEMOGRAPHICS
-═══════════════════════════════════════════════════ -->
+<!-- SECTION 1: ORIENTATION -->
 <section id="section-demographics">
-  <h2>Demographics Overview</h2>
-  <p class="section-desc">Distribution of the 20,103 surveyed students by age, sex, grade, and race/ethnicity.</p>
+  <p class="section-kicker">1. Orientation</p>
+  <h2>Who Are We Looking At?</h2>
+  <p class="section-desc">Sample composition of the 20,103 surveyed students. These bars show raw survey rows; health estimates below use the CDC survey weight.</p>
   <div id="demo-charts" class="chart-row"></div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════
-     SECTION 2: HEALTH DOMAIN RADAR
-═══════════════════════════════════════════════════ -->
-<section id="section-radar">
-  <h2>Health Domain Radar</h2>
-  <p class="section-desc">Five health dimensions compared across demographic groups. Each axis shows the % of students with a positive / protective outcome.</p>
-  <div id="radar-controls" class="controls">
-    <label>Compare by:</label>
-    <select id="radar-group-select">
-      <option value="sex">Sex</option>
-      <option value="grade">Grade</option>
-      <option value="age">Age</option>
-      <option value="race">Race / Ethnicity</option>
-    </select>
+<!-- SECTION 2: SHALLOW NATIONAL PROFILE -->
+<section id="section-findings">
+  <p class="section-kicker">2. Shallow Profile</p>
+  <h2>What Are The Obvious Teen-Health Signals?</h2>
+  <p class="section-desc">Weighted national YRBS estimates show that teen health is not one issue: mental health, sleep, activity, bullying, substance use, support, and relationship safety all appear in the first scan.</p>
+  <div class="finding-grid">
+    <article class="finding-card">
+      <span class="finding-domain">Mental health</span>
+      <span class="finding-value">28.54%</span>
+      <span class="finding-label">reported poor current mental health</span>
+    </article>
+    <article class="finding-card">
+      <span class="finding-domain">Daily routines</span>
+      <span class="finding-value">23.20%</span>
+      <span class="finding-label">got 8 or more hours of sleep</span>
+    </article>
+    <article class="finding-card">
+      <span class="finding-domain">Activity</span>
+      <span class="finding-value">46.32%</span>
+      <span class="finding-label">were active on at least 5 days</span>
+    </article>
+    <article class="finding-card">
+      <span class="finding-domain">Safety</span>
+      <span class="finding-value">19.24%</span>
+      <span class="finding-label">were bullied at school</span>
+    </article>
+    <article class="finding-card">
+      <span class="finding-domain">Substance use</span>
+      <span class="finding-value">22.10%</span>
+      <span class="finding-label">reported current alcohol use</span>
+    </article>
+    <article class="finding-card">
+      <span class="finding-domain">Relationship safety</span>
+      <span class="finding-value">11.37%</span>
+      <span class="finding-label">reported sexual violence at least once</span>
+    </article>
   </div>
-  <div id="radar-toggles"></div>
-  <div id="radar-chart"></div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════
-     SECTION 3: YRBS GROUPED BAR (existing, polished)
-═══════════════════════════════════════════════════ -->
+<!-- SECTION 3: FIRST COMPARISON -->
 <section id="section-bar">
-  <h2>Health Indicators by Subgroup</h2>
-  <p class="section-desc">All six indicators at once. Each dot is one group; the line shows the range across groups. Hover for exact values.</p>
+  <p class="section-kicker">3. First Comparison</p>
+  <h2>Whose Profile Looks Different?</h2>
+  <p class="section-desc">Weighted prevalence of six concerns across a selected demographic dimension. The useful pattern is the profile shape, not a single healthy/unhealthy ranking.</p>
   <div class="controls">
     <label>Group by:</label>
     <select id="group-select">
@@ -60,38 +79,57 @@
   <div id="bar-chart"></div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════
-     SECTION 4: PHONE — HEATMAP
-═══════════════════════════════════════════════════ -->
-<section id="section-heatmap">
-  <h2>Phone Addiction &amp; Wellbeing Correlations</h2>
-  <p class="section-desc">Pearson correlation of each wellbeing metric with phone addiction level. Red = higher addiction associated with worse outcome; green = better. Sorted by strength.</p>
-  <div id="heatmap-chart"></div>
+<!-- SECTION 4: GRADE PROFILE SHIFT -->
+<section id="section-grade-shift">
+  <p class="section-kicker">4. Profile Shift</p>
+  <h2>How Does Health Change Across High School?</h2>
+  <p class="section-desc">Grade is more than a demographic filter: routines, bullying, school connection, substance use, and mental health move in different directions from 9th to 12th grade.</p>
+  <div id="grade-shift-summary" class="grade-summary-strip"></div>
+  <div id="grade-shift-chart"></div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════
-     SECTION 5: PHONE — SCATTER
-═══════════════════════════════════════════════════ -->
-<section id="section-scatter">
-  <h2>Daily Phone Usage vs. Anxiety Level</h2>
-  <p class="section-desc">Each dot is one student. Color indicates addiction level. Hover for details.</p>
-  <div id="scatter-chart"></div>
+<!-- SECTION 5: INDIVIDUAL RISK ROLE -->
+<section id="section-risk-role">
+  <p class="section-kicker">5. Individual Risk Role</p>
+  <h2>Which Factors Separate Mental Health Most?</h2>
+  <p class="section-desc">Each bar shows the weighted poor-current-mental-health gap between students with and without the selected risk. Click a row to include or exclude that risk in the stack below.</p>
+  <div id="risk-role-chart"></div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════
-     SECTION 6: PHONE — legacy charts (kept)
-═══════════════════════════════════════════════════ -->
-<section id="section-phone-legacy">
-  <h2>Phone Addiction — Additional Charts</h2>
-  <div id="summary-phone"></div>
-  <div class="controls">
-    <label>View:</label>
-    <select id="phone-option">
-      <option value="A">Addiction level vs. avg daily usage</option>
-      <option value="B">Usage group vs. avg anxiety</option>
-    </select>
+<!-- SECTION 6: RISK STACK -->
+<section id="section-risk-stack">
+  <p class="section-kicker">6. Risk Stack</p>
+  <h2>What Happens When Problems Accumulate?</h2>
+  <p class="section-desc">The same selected risks are counted together. The chart uses complete cases for the active risk fields and reports the valid row count.</p>
+  <div id="risk-selector" class="risk-selector" aria-label="Risk components"></div>
+  <div id="risk-stack-chart"></div>
+</section>
+
+<!-- SECTION 7: SEXUAL HEALTH -->
+<section id="section-sexual-health">
+  <p class="section-kicker">7. Sexual Health</p>
+  <h2>How Does Sexual Health Fit Responsibly?</h2>
+  <p class="section-desc">Sexual health belongs in the teen-health profile when it is framed around safety, consent, prevention, testing, and access to care rather than treating sexual activity itself as a risk.</p>
+  <div id="sexual-summary" class="sexual-summary-strip"></div>
+  <div class="sexual-layout">
+    <div class="sexual-panel">
+      <h3>Relationship Safety and Mental Health</h3>
+      <div id="sexual-gap-chart"></div>
+    </div>
+    <div class="sexual-panel">
+      <h3>Prevention and Agency Among Currently Sexually Active Students</h3>
+      <div id="sexual-prevention-chart"></div>
+    </div>
   </div>
-  <div id="bar-chart-phone"></div>
+</section>
+
+<!-- SECTION 8: PHONE CONTEXT -->
+<section id="section-heatmap">
+  <p class="section-kicker">8. Phone Context</p>
+  <h2>Is Teen Health Just A Digital-Behavior Story?</h2>
+  <p class="section-desc">Phone-use correlations are useful context, but the YRBS story shows teen health is broader than a single digital-behavior explanation.</p>
+  <div id="phone-corr-summary" class="phone-summary-strip"></div>
+  <div id="heatmap-chart"></div>
 </section>
 
 <script src="main.js"></script>
