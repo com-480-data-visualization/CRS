@@ -86,9 +86,9 @@ section h2 {
 }
 
 .chart-title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #444;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a2e;
   margin-bottom: 6px;
   text-align: center;
 }
@@ -122,6 +122,44 @@ section h2 {
   color: #666;
   margin-top: 2px;
   text-align: center;
+}
+
+/* ── Radar toggle pills (serve as legend) ── */
+#radar-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.radar-toggle {
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 2px solid var(--toggle-color, #aaa);
+  background: transparent;
+  color: #666;
+  font-size: 0.83rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, opacity 0.15s;
+  user-select: none;
+}
+
+.radar-toggle.active {
+  background: var(--toggle-color, #aaa);
+  color: #fff;
+  font-weight: 600;
+}
+
+.radar-toggle:not(.active):hover {
+  background: color-mix(in srgb, var(--toggle-color, #aaa) 15%, transparent);
+  color: #333;
+}
+
+/* ── Radar SVG + controls — all constrained to same width ── */
+#radar-controls,
+#radar-toggles,
+#radar-chart {
+  max-width: 700px;
 }
 
 /* ── Demo filter badge ── */
@@ -193,6 +231,22 @@ section h2 {
 /* ── SVG text defaults ── */
 svg text {
   font-family: "Segoe UI", Arial, sans-serif;
+}
+
+/* ── Dot plot tooltip ── */
+.dot-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(26,26,46,0.88);
+  color: #fff;
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  opacity: 0;
+  transition: opacity 0.1s;
+  z-index: 99;
+  white-space: nowrap;
 }
 
 /* ── Scatter tooltip ── */

@@ -32,21 +32,18 @@ d3.csv("data/yrbs2023_readable.csv").then(raw => {
   const data = raw.filter(d => d.sex && d.grade);
 
   drawDemographics(data);
+  renderRadarToggles(data, "sex");
   drawRadar(data, "sex");
-  drawBarChart(data, "sad", "sex");
+  drawDotPlot(data, "sex");
 
   d3.select("#radar-group-select").on("change", function () {
-    drawRadar(data, this.value);
-  });
-
-  d3.select("#indicator-select").on("change", function () {
-    const group = d3.select("#group-select").property("value");
-    drawBarChart(data, this.value, group);
+    const field = this.value;
+    renderRadarToggles(data, field);
+    drawRadar(data, field);
   });
 
   d3.select("#group-select").on("change", function () {
-    const indicator = d3.select("#indicator-select").property("value");
-    drawBarChart(data, indicator, this.value);
+    drawDotPlot(data, this.value);
   });
 });
 
@@ -160,8 +157,8 @@ function renderDemographics(allData) {
   }
 
   // ── Per-chart rendering ───────────────────────────────────
-  const H = 260;   // same viewBox height for all charts
-  const margin = { top: 12, right: 14, bottom: 72, left: 48 };
+  const H = 210;   // same viewBox height for all charts
+  const margin = { top: 10, right: 14, bottom: 62, left: 44 };
   const ih = H - margin.top - margin.bottom;
   const TRANSITION_MS = 350;
 
@@ -259,7 +256,7 @@ function renderDemographics(allData) {
 
     labels.enter().append("text").attr("class", "demo-val-label")
       .attr("text-anchor", "middle")
-      .style("font-size", "10px")
+      .style("font-size", "11px")
       .style("pointer-events", "none")
       .attr("y", ih)
       .merge(labels)
@@ -281,10 +278,11 @@ function renderDemographics(allData) {
       .selectAll("text")
         .attr("transform", "rotate(-35)")
         .style("text-anchor", "end")
-        .style("font-size", "10px");
+        .style("font-size", "11px");
 
     g.append("g").attr("class","y-axis")
-      .call(d3.axisLeft(y).ticks(4).tickFormat(d3.format("~s")));
+      .call(d3.axisLeft(y).ticks(4).tickFormat(d3.format("~s")))
+      .selectAll("text").style("font-size", "10px");
   });
 }
 
@@ -299,14 +297,67 @@ const RADAR_AXES = [
   { key: "safety",       label: "School safety" },
 ];
 
-function computeRadarScores(data, groupField) {
-  const groups = Array.from(new Set(data.map(d => d[groupField]).filter(Boolean)));
-  return groups.map(g => {
-    const subset = data.filter(d => d[groupField] === g);
+const RADAR_GROUP_ORDERS = {
+  sex:   ["Male", "Female"],
+  grade: ["9th grade", "10th grade", "11th grade", "12th grade"],
+  age:   ["12 years old or younger", "13 years old", "14 years old",
+          "15 years old", "16 years old", "17 years old", "18 years old or older"],
+  race:  ["White", "Multiple - Hispanic", "Black or African American",
+          "Multiple - Non-Hispanic", "Am Indian/Alaska Native",
+          "Hispanic/Latino", "Asian", "Native Hawaiian/Other PI"],
+};
+
+// Selected groups state — persists across redraws
+const radarSelected = new Set();
+
+function radarGroupsFor(allData, groupField) {
+  const order = RADAR_GROUP_ORDERS[groupField];
+  return order.filter(g => allData.some(d => d[groupField] === g));
+}
+
+function renderRadarToggles(allData, groupField) {
+  const groups = radarGroupsFor(allData, groupField);
+
+  // Reset selection to all groups when dimension changes
+  radarSelected.clear();
+  groups.forEach(g => radarSelected.add(g));
+
+  const container = d3.select("#radar-toggles");
+  container.selectAll("*").remove();
+
+  groups.forEach((grp, i) => {
+    const col = colorFor(grp, i);
+    container.append("button")
+      .attr("class", "radar-toggle active")
+      .attr("data-group", grp)
+      .style("--toggle-color", col)
+      .text(grp)
+      .on("click", function () {
+        const key = d3.select(this).attr("data-group");
+        if (radarSelected.has(key)) {
+          if (radarSelected.size > 1) {
+            radarSelected.delete(key);
+            d3.select(this).classed("active", false);
+          }
+        } else {
+          radarSelected.add(key);
+          d3.select(this).classed("active", true);
+        }
+        drawRadar(allData, groupField);
+      });
+  });
+}
+
+function computeRadarScores(allData, groupField) {
+  return Array.from(radarSelected).map((grp, si) => {
+    const subset = allData.filter(d => d[groupField] === grp);
     const n = subset.length;
-    const pct = fn => +(subset.filter(fn).length / n * 100).toFixed(1);
+    const pct = fn => n ? +(subset.filter(fn).length / n * 100).toFixed(1) : 0;
+    // Map back to original palette index for consistent colours
+    const paletteIdx = radarGroupsFor(allData, groupField).indexOf(grp);
     return {
-      group: g,
+      group: grp,
+      color: colorFor(grp, paletteIdx === -1 ? si : paletteIdx),
       scores: {
         mentalHealth: pct(d => d.Q26_label === "No"),
         sleep:        pct(d => ["8 hours","9 hours","10 or more hours"].includes(d.Q85_label)),
@@ -318,29 +369,25 @@ function computeRadarScores(data, groupField) {
   });
 }
 
-function drawRadar(data, groupField) {
+function drawRadar(allData, groupField) {
   d3.select("#radar-chart").selectAll("*").remove();
 
-  const groups = (groupField === "sex")
-    ? ["Male","Female"]
-    : ["9th grade","10th grade","11th grade","12th grade"];
+  const seriesData = computeRadarScores(allData, groupField);
+  const many = seriesData.length > 4;
 
-  const seriesData = computeRadarScores(
-    data.filter(d => groups.includes(d[groupField])),
-    groupField
-  ).filter(s => groups.includes(s.group));
-
-  const W = 460, H = 420;
-  const cx = W / 2, cy = H / 2;
-  const R = 155;
+  const W = 660, H = 600;          // viewBox dimensions — rendered size is CSS-controlled
+  const cx = W / 2, cy = H / 2 + 16;
+  const R = 210;
   const levels = 5;
-  const numAxes = RADAR_AXES.length;
-  const angleSlice = (Math.PI * 2) / numAxes;
+  const angleSlice = (Math.PI * 2) / RADAR_AXES.length;
 
   const svg = d3.select("#radar-chart")
     .append("svg")
-    .attr("width", W)
-    .attr("height", H);
+    .attr("viewBox", `0 0 ${W} ${H}`)
+    .attr("width", "100%")
+    .attr("preserveAspectRatio", "xMidYMid meet")
+    .style("display", "block")
+    .style("overflow", "visible");
 
   const g = svg.append("g").attr("transform", `translate(${cx},${cy})`);
 
@@ -349,38 +396,30 @@ function drawRadar(data, groupField) {
     const r = (R / levels) * lvl;
     g.append("circle")
       .attr("r", r)
-      .attr("fill", "none")
+      .attr("fill", lvl % 2 === 0 ? "#f5f5f8" : "none")
       .attr("stroke", "#ccc")
       .attr("stroke-dasharray", "3,3");
 
     g.append("text")
-      .attr("x", 4)
-      .attr("y", -r)
-      .attr("dy", "0.35em")
-      .style("font-size", "9px")
-      .style("fill", "#888")
+      .attr("x", 5).attr("y", -r).attr("dy", "0.35em")
+      .style("font-size", "13px").style("fill", "#999")
       .text(`${(100 / levels * lvl).toFixed(0)}%`);
   }
 
   // Axis lines and labels
   RADAR_AXES.forEach((ax, i) => {
     const angle = angleSlice * i - Math.PI / 2;
-    const lx = Math.cos(angle) * R;
-    const ly = Math.sin(angle) * R;
-
     g.append("line")
       .attr("x1", 0).attr("y1", 0)
-      .attr("x2", lx).attr("y2", ly)
-      .attr("stroke", "#bbb");
+      .attr("x2", Math.cos(angle) * R).attr("y2", Math.sin(angle) * R)
+      .attr("stroke", "#ccc");
 
-    const labelR = R + 22;
+    const labelR = R + 42;
     g.append("text")
       .attr("x", Math.cos(angle) * labelR)
       .attr("y", Math.sin(angle) * labelR)
-      .attr("text-anchor", "middle")
-      .attr("dy", "0.35em")
-      .style("font-size", "11px")
-      .style("fill", "#333")
+      .attr("text-anchor", "middle").attr("dy", "0.35em")
+      .style("font-size", "15px").style("font-weight", "600").style("fill", "#444")
       .text(ax.label);
   });
 
@@ -390,38 +429,32 @@ function drawRadar(data, groupField) {
     .angle((_d, i) => i * angleSlice)
     .curve(d3.curveLinearClosed);
 
-  seriesData.forEach((series, si) => {
+  seriesData.forEach(series => {
     const pathData = RADAR_AXES.map(ax => ({ value: series.scores[ax.key] }));
-    const col = colorFor(series.group, si);
+    const col = series.color;
 
     g.append("path")
       .datum(pathData)
       .attr("d", radarLine)
       .attr("fill", col)
-      .attr("fill-opacity", 0.15)
+      .attr("fill-opacity", many ? 0.07 : 0.15)
       .attr("stroke", col)
-      .attr("stroke-width", 2);
+      .attr("stroke-width", many ? 1.5 : 2.5);
 
-    // Dots
+    // Dots with tooltip
     pathData.forEach((pt, i) => {
       const angle = angleSlice * i - Math.PI / 2;
       g.append("circle")
         .attr("cx", Math.cos(angle) * (pt.value / 100) * R)
         .attr("cy", Math.sin(angle) * (pt.value / 100) * R)
-        .attr("r", 4)
+        .attr("r", many ? 3 : 4)
         .attr("fill", col)
+        .style("cursor", "default")
         .append("title")
-        .text(`${series.group} — ${RADAR_AXES[i].label}: ${pt.value}%`);
+        .text(`${series.group}\n${RADAR_AXES[i].label}: ${pt.value}%`);
     });
   });
 
-  // Legend
-  const legend = svg.append("g").attr("transform", `translate(${W - 130}, 20)`);
-  seriesData.forEach((s, i) => {
-    const col = colorFor(s.group, i);
-    legend.append("rect").attr("x", 0).attr("y", i * 20).attr("width", 12).attr("height", 12).attr("fill", col);
-    legend.append("text").attr("x", 16).attr("y", i * 20 + 10).style("font-size", "12px").text(s.group);
-  });
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -436,177 +469,268 @@ const INDICATORS = {
   safety:     { label: "School safety – no weapon (%)", fn: d => d.Q14_label === "0 days" },
 };
 
-const GROUP_ORDERS = {
+const DOT_GROUP_ORDERS = {
   sex:   ["Male","Female"],
   grade: ["9th grade","10th grade","11th grade","12th grade"],
-  race:  null,
+  age:   ["12 years old or younger","13 years old","14 years old",
+          "15 years old","16 years old","17 years old","18 years old or older"],
+  race:  ["White","Multiple - Hispanic","Black or African American",
+          "Multiple - Non-Hispanic","Am Indian/Alaska Native",
+          "Hispanic/Latino","Asian","Native Hawaiian/Other PI"],
 };
 
-function drawBarChart(data, indicatorKey, groupField) {
+const DOT_INDICATORS = [
+  { key: "sad",       label: "Felt sad / hopeless",    fn: d => d.Q26_label === "Yes" },
+  { key: "sleep",     label: "Adequate sleep (≥8 hrs)", fn: d => ["8 hours","9 hours","10 or more hours"].includes(d.Q85_label) },
+  { key: "active",    label: "Physically active 7d/wk", fn: d => d.Q75_label === "7 days" },
+  { key: "marijuana", label: "No marijuana use",        fn: d => d.Q47_label === "Never tried marijuana" },
+  { key: "alcohol",   label: "No alcohol use",          fn: d => d.Q41_label === "Never drank alcohol" },
+  { key: "safety",    label: "School safety",           fn: d => d.Q14_label === "0 days" },
+];
+
+function drawDotPlot(data, groupField) {
   d3.select("#bar-chart").selectAll("*").remove();
 
-  const indicator = INDICATORS[indicatorKey];
-  const groups = GROUP_ORDERS[groupField]
-    ?? Array.from(new Set(data.map(d => d[groupField]).filter(Boolean)))
-         .sort((a, b) => data.filter(r => r[groupField] === b).length - data.filter(r => r[groupField] === a).length)
-         .slice(0, 8);
+  const groups = DOT_GROUP_ORDERS[groupField]
+    .filter(g => data.some(d => d[groupField] === g));
 
-  const barData = groups.map(g => {
-    const subset = data.filter(d => d[groupField] === g);
-    return { group: g, pct: subset.length ? +(subset.filter(indicator.fn).length / subset.length * 100).toFixed(1) : 0 };
+  // Compute % per indicator × group
+  const rows = DOT_INDICATORS.map(ind => {
+    const pts = groups.map((g, gi) => {
+      const subset = data.filter(d => d[groupField] === g);
+      const pct = subset.length ? +(subset.filter(ind.fn).length / subset.length * 100).toFixed(1) : 0;
+      return { group: g, gi, pct };
+    });
+    return { label: ind.label, pts };
   });
 
-  const margin = { top: 30, right: 20, bottom: 80, left: 55 };
-  const W = Math.max(400, groups.length * 70 + margin.left + margin.right);
-  const H = 320;
+  // Tooltip
+  const tip = d3.select("body").selectAll(".dot-tooltip").data([1])
+    .join("div").attr("class", "dot-tooltip");
+
+  // Each group gets a fixed vertical lane within its row so dots never overlap
+  const laneStep = groups.length <= 2 ? 10 : groups.length <= 4 ? 11 : 10;
+  const laneSpan = (groups.length - 1) * laneStep;          // total spread in px
+  const rowH     = Math.max(52, laneSpan + 28);             // row height adapts
+  const offsets  = groups.map((_, i) => (i - (groups.length - 1) / 2) * laneStep);
+
+  const labelW = 190;
+  const margin = { top: 32, right: 24, bottom: 40, left: labelW };
+  const W = 700;
+  const H = rows.length * rowH + margin.top + margin.bottom;
   const iw = W - margin.left - margin.right;
-  const ih = H - margin.top - margin.bottom;
 
   const svg = d3.select("#bar-chart")
-    .append("svg").attr("width", W).attr("height", H);
+    .append("svg")
+    .attr("viewBox", `0 0 ${W} ${H}`)
+    .attr("width", "100%")
+    .style("max-width", "720px")
+    .style("display", "block")
+    .style("overflow", "visible");
 
   const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
-  const x = d3.scaleBand().domain(groups).range([0, iw]).padding(0.3);
-  const y = d3.scaleLinear().domain([0, Math.min(100, d3.max(barData, d => d.pct) * 1.15)]).nice().range([ih, 0]);
+  const x = d3.scaleLinear().domain([0, 100]).range([0, iw]);
 
-  g.selectAll("rect")
-    .data(barData)
-    .join("rect")
-    .attr("x", d => x(d.group))
-    .attr("y", d => y(d.pct))
-    .attr("width", x.bandwidth())
-    .attr("height", d => ih - y(d.pct))
-    .attr("fill", (d, i) => colorFor(d.group, i))
-    .attr("rx", 3);
+  // Light vertical grid lines
+  g.append("g").attr("class", "grid")
+    .call(d3.axisBottom(x).ticks(5).tickSize(rows.length * rowH).tickFormat(""))
+    .selectAll("line").style("stroke", "#eee");
+  g.select(".grid .domain").remove();
 
-  // Value labels
-  g.selectAll(".bar-label")
-    .data(barData)
-    .join("text")
-    .attr("class", "bar-label")
-    .attr("x", d => x(d.group) + x.bandwidth() / 2)
-    .attr("y", d => y(d.pct) - 5)
-    .attr("text-anchor", "middle")
-    .style("font-size", "11px")
-    .style("fill", "#444")
-    .text(d => `${d.pct}%`);
+  // X-axis at bottom
+  g.append("g")
+    .attr("transform", `translate(0,${rows.length * rowH})`)
+    .call(d3.axisBottom(x).ticks(5).tickFormat(d => `${d}%`))
+    .selectAll("text").style("font-size", "13px");
+  g.select(".domain").style("display", "none");
 
-  g.append("g").attr("transform", `translate(0,${ih})`).call(d3.axisBottom(x))
-    .selectAll("text").attr("transform", "rotate(-30)").style("text-anchor", "end").style("font-size", "11px");
+  // Legend — placed to the right of the chart
+  const leg = svg.append("g")
+    .attr("transform", `translate(${margin.left + iw + 16}, ${margin.top})`);
+  groups.forEach((grp, i) => {
+    const col = colorFor(grp, i);
+    leg.append("circle").attr("cx", 5).attr("cy", i * 18 + 5).attr("r", 5).attr("fill", col);
+    leg.append("text").attr("x", 14).attr("y", i * 18 + 9)
+      .style("font-size", "11px").style("fill", "#333")
+      .text(grp.replace(" grade","").replace(" years old","y").replace("Multiple - ",""));
+  });
 
-  g.append("g").call(d3.axisLeft(y).ticks(5).tickFormat(d => `${d}%`));
+  // Rows
+  rows.forEach((row, ri) => {
+    const rowMid = ri * rowH + rowH / 2;
+    const rowG   = g.append("g");
 
-  // Y-axis label
-  g.append("text")
-    .attr("transform", "rotate(-90)")
-    .attr("x", -ih / 2).attr("y", -45)
-    .attr("text-anchor", "middle")
-    .style("font-size", "11px")
-    .style("fill", "#555")
-    .text(indicator.label);
+    // Alternating stripe
+    if (ri % 2 === 0) {
+      rowG.append("rect")
+        .attr("x", -labelW).attr("y", ri * rowH)
+        .attr("width", W).attr("height", rowH)
+        .attr("fill", "#f8f9fc");
+    }
+
+    // Indicator label (vertically centred in row)
+    rowG.append("text")
+      .attr("x", -12).attr("y", rowMid)
+      .attr("text-anchor", "end").attr("dy", "0.35em")
+      .style("font-size", "13px").style("fill", "#333")
+      .text(row.label);
+
+    // Horizontal range line at row centre
+    const pcts = row.pts.map(p => p.pct);
+    rowG.append("line")
+      .attr("x1", x(d3.min(pcts))).attr("x2", x(d3.max(pcts)))
+      .attr("y1", rowMid).attr("y2", rowMid)
+      .attr("stroke", "#ddd").attr("stroke-width", 2);
+
+    // Dots — each group at its own vertical lane offset
+    row.pts.forEach(pt => {
+      const col = colorFor(pt.group, pt.gi);
+      const cy  = rowMid + offsets[pt.gi];
+      rowG.append("circle")
+        .attr("cx", x(pt.pct)).attr("cy", cy)
+        .attr("r", 6).attr("fill", col)
+        .attr("stroke", "#fff").attr("stroke-width", 1.5)
+        .style("cursor", "default")
+        .on("mouseover", () => {
+          tip.style("opacity", 1)
+            .html(`<strong>${pt.group}</strong><br>${row.label}: <strong>${pt.pct}%</strong>`);
+        })
+        .on("mousemove", event => {
+          tip.style("left", (event.pageX + 12) + "px").style("top", (event.pageY - 36) + "px");
+        })
+        .on("mouseout", () => tip.style("opacity", 0));
+    });
+  });
 }
 
 // ═══════════════════════════════════════════════════════════
-// SECTION 4 — Heatmap: phone wellbeing by addiction group
+// SECTION 4 — Correlation bar chart: metrics vs addiction
 // ═══════════════════════════════════════════════════════════
+function pearsonR(xs, ys) {
+  const mx = d3.mean(xs), my = d3.mean(ys);
+  const num = d3.sum(xs.map((x, i) => (x - mx) * (ys[i] - my)));
+  const den = Math.sqrt(d3.sum(xs.map(x => (x - mx) ** 2)) * d3.sum(ys.map(y => (y - my) ** 2)));
+  return den === 0 ? 0 : num / den;
+}
+
 function drawHeatmap(data) {
   d3.select("#heatmap-chart").selectAll("*").remove();
 
-  function addictionGroup(v) {
-    if (v <= 3) return "Low (1–3)";
-    if (v <= 6) return "Medium (4–6)";
-    return "High (7–10)";
-  }
+  const addiction = data.map(d => d.Addiction_Level);
 
-  const rows = ["Low (1–3)", "Medium (4–6)", "High (7–10)"];
-  const cols = [
-    { key: "Sleep_Hours",      label: "Sleep (hrs)",      higherBetter: true  },
-    { key: "Anxiety_Level",    label: "Anxiety",          higherBetter: false },
-    { key: "Depression_Level", label: "Depression",       higherBetter: false },
-    { key: "Self_Esteem",      label: "Self-Esteem",      higherBetter: true  },
-    { key: "Exercise_Hours",   label: "Exercise (hrs)",   higherBetter: true  },
-    { key: "Phone_Checks_Per_Day", label: "Phone Checks/Day", higherBetter: false },
+  const METRICS = [
+    { key: "Phone_Checks_Per_Day", label: "Phone checks / day", higherBad: true  },
+    { key: "Sleep_Hours",          label: "Sleep (hrs)",         higherBad: false },
+    { key: "Anxiety_Level",        label: "Anxiety",             higherBad: true  },
+    { key: "Depression_Level",     label: "Depression",          higherBad: true  },
+    { key: "Exercise_Hours",       label: "Exercise (hrs)",      higherBad: false },
+    { key: "Self_Esteem",          label: "Self-Esteem",         higherBad: false },
   ];
 
-  // Aggregate
-  const cellData = [];
-  rows.forEach(row => {
-    const subset = data.filter(d => addictionGroup(d.Addiction_Level) === row);
-    cols.forEach(col => {
-      cellData.push({ row, col: col.label, val: d3.mean(subset, d => d[col.key]), higherBetter: col.higherBetter });
-    });
-  });
+  // Compute r and sort by |r| descending
+  const corrs = METRICS.map(m => ({
+    ...m,
+    r: pearsonR(addiction, data.map(d => d[m.key])),
+  })).sort((a, b) => Math.abs(b.r) - Math.abs(a.r));
 
-  // Per-column min/max for normalisation
-  const colExtent = {};
-  cols.forEach(col => {
-    const vals = cellData.filter(c => c.col === col.label).map(c => c.val);
-    colExtent[col.label] = d3.extent(vals);
-  });
-
-  const margin = { top: 40, right: 20, bottom: 60, left: 100 };
-  const cellW = 90, cellH = 55;
-  const W = margin.left + cols.length * cellW + margin.right;
-  const H = margin.top + rows.length * cellH + margin.bottom;
+  const margin = { top: 16, right: 90, bottom: 40, left: 160 };
+  const W = 560, H = corrs.length * 46 + margin.top + margin.bottom;
+  const iw = W - margin.left - margin.right;
+  const ih = H - margin.top - margin.bottom;
 
   const svg = d3.select("#heatmap-chart")
-    .append("svg").attr("width", W).attr("height", H);
+    .append("svg")
+    .attr("viewBox", `0 0 ${W} ${H}`)
+    .attr("width", "100%")
+    .style("max-width", "620px")
+    .style("display", "block")
+    .style("overflow", "visible");
 
   const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
-  // Colour: green = good, red = bad
-  function cellColor(d) {
-    const [mn, mx] = colExtent[d.col];
-    const t = mx === mn ? 0.5 : (d.val - mn) / (mx - mn); // 0 = min, 1 = max
-    const goodT = d.higherBetter ? t : 1 - t;
-    return d3.interpolateRdYlGn(0.1 + goodT * 0.8);
-  }
+  const x = d3.scaleLinear().domain([-0.35, 0.35]).range([0, iw]);
+  const y = d3.scaleBand().domain(corrs.map(d => d.label)).range([0, ih]).padding(0.3);
 
-  // Cells
-  cellData.forEach(d => {
-    const xi = cols.findIndex(c => c.label === d.col);
-    const yi = rows.indexOf(d.row);
+  // Zero line
+  g.append("line")
+    .attr("x1", x(0)).attr("x2", x(0))
+    .attr("y1", 0).attr("y2", ih)
+    .attr("stroke", "#999").attr("stroke-width", 1.5);
+
+  // Reference lines at ±0.2
+  [-0.2, 0.2].forEach(v => {
+    g.append("line")
+      .attr("x1", x(v)).attr("x2", x(v))
+      .attr("y1", 0).attr("y2", ih)
+      .attr("stroke", "#ddd").attr("stroke-dasharray", "4,3").attr("stroke-width", 1);
+  });
+
+  // X-axis
+  g.append("g")
+    .attr("transform", `translate(0,${ih})`)
+    .call(d3.axisBottom(x).ticks(7).tickFormat(d3.format("+.2f")))
+    .call(ax => ax.select(".domain").remove())
+    .selectAll("text").style("font-size", "12px");
+
+  // Axis label
+  g.append("text")
+    .attr("x", iw / 2).attr("y", ih + 34)
+    .attr("text-anchor", "middle")
+    .style("font-size", "12px").style("fill", "#555")
+    .text("Pearson r with Addiction Level");
+
+  const tip = d3.select("body").selectAll(".corr-tooltip").data([1])
+    .join("div").attr("class", "corr-tooltip dot-tooltip");
+
+  // Bars
+  corrs.forEach(d => {
+    const barColor = d.r > 0
+      ? (d.higherBad ? "#e15759" : "#59a14f")   // positive r: red if bad, green if good
+      : (d.higherBad ? "#59a14f" : "#e15759");   // negative r: green if bad metric goes down
+
+    const cy = y(d.label) + y.bandwidth() / 2;
+    const x0 = x(0);
+    const x1 = x(d.r);
 
     g.append("rect")
-      .attr("x", xi * cellW).attr("y", yi * cellH)
-      .attr("width", cellW - 2).attr("height", cellH - 2)
-      .attr("fill", cellColor(d))
-      .attr("rx", 4)
-      .append("title")
-      .text(`${d.row} / ${d.col}: ${d.val.toFixed(2)}`);
+      .attr("x", Math.min(x0, x1))
+      .attr("y", y(d.label))
+      .attr("width", Math.abs(x1 - x0))
+      .attr("height", y.bandwidth())
+      .attr("fill", barColor)
+      .attr("rx", 3)
+      .on("mouseover", () => tip.style("opacity", 1)
+        .html(`<strong>${d.label}</strong><br>r = ${d.r.toFixed(3)}`))
+      .on("mousemove", ev => tip
+        .style("left", (ev.pageX + 12) + "px")
+        .style("top",  (ev.pageY - 32) + "px"))
+      .on("mouseout", () => tip.style("opacity", 0));
 
+    // r value label
+    const labelX = d.r >= 0 ? x1 + 5 : x1 - 5;
     g.append("text")
-      .attr("x", xi * cellW + cellW / 2)
-      .attr("y", yi * cellH + cellH / 2)
-      .attr("text-anchor", "middle").attr("dy", "0.35em")
+      .attr("x", labelX).attr("y", cy)
+      .attr("dy", "0.35em")
+      .attr("text-anchor", d.r >= 0 ? "start" : "end")
       .style("font-size", "12px").style("font-weight", "600")
-      .style("fill", "#222")
-      .text(d.val.toFixed(1));
-  });
+      .style("fill", barColor)
+      .text(d3.format("+.2f")(d.r));
 
-  // Row labels
-  rows.forEach((r, i) => {
+    // Metric label
     g.append("text")
-      .attr("x", -8).attr("y", i * cellH + cellH / 2)
-      .attr("text-anchor", "end").attr("dy", "0.35em")
-      .style("font-size", "12px").text(r);
+      .attr("x", -10).attr("y", cy)
+      .attr("dy", "0.35em").attr("text-anchor", "end")
+      .style("font-size", "13px").style("fill", "#333")
+      .text(d.label);
   });
 
-  // Col labels
-  cols.forEach((c, i) => {
-    g.append("text")
-      .attr("x", i * cellW + cellW / 2)
-      .attr("y", rows.length * cellH + 18)
-      .attr("text-anchor", "middle")
-      .style("font-size", "11px").text(c.label);
+  // Legend
+  const leg = svg.append("g").attr("transform", `translate(${margin.left}, ${H - 14})`);
+  [["#e15759","Higher addiction → worse"], ["#59a14f","Higher addiction → better"]].forEach(([col, lbl], i) => {
+    leg.append("rect").attr("x", i * 230).attr("y", 0).attr("width", 12).attr("height", 12).attr("fill", col).attr("rx", 2);
+    leg.append("text").attr("x", i * 230 + 16).attr("y", 10).style("font-size", "11px").style("fill", "#555").text(lbl);
   });
-
-  // Title annotation
-  svg.append("text")
-    .attr("x", margin.left).attr("y", 18)
-    .style("font-size", "11px").style("fill", "#666")
-    .text("Green = better outcome  |  Red = worse outcome  (per-column normalisation)");
 }
 
 // ═══════════════════════════════════════════════════════════

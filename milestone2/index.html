@@ -34,8 +34,11 @@
     <select id="radar-group-select">
       <option value="sex">Sex</option>
       <option value="grade">Grade</option>
+      <option value="age">Age</option>
+      <option value="race">Race / Ethnicity</option>
     </select>
   </div>
+  <div id="radar-toggles"></div>
   <div id="radar-chart"></div>
 </section>
 
@@ -43,23 +46,15 @@
      SECTION 3: YRBS GROUPED BAR (existing, polished)
 ═══════════════════════════════════════════════════ -->
 <section id="section-bar">
-  <h2>Health Indicator by Subgroup</h2>
-  <p class="section-desc">Percentage of students with a selected risk or protective indicator, broken down by demographic group.</p>
+  <h2>Health Indicators by Subgroup</h2>
+  <p class="section-desc">All six indicators at once. Each dot is one group; the line shows the range across groups. Hover for exact values.</p>
   <div class="controls">
-    <label>Indicator:</label>
-    <select id="indicator-select">
-      <option value="sad">Felt sad or hopeless</option>
-      <option value="sleep">Adequate sleep (8+ hrs)</option>
-      <option value="active">Physically active 7 days/wk</option>
-      <option value="marijuana">No marijuana use</option>
-      <option value="alcohol">No alcohol use</option>
-      <option value="safety">School safety (no weapon)</option>
-    </select>
-    <label style="margin-left:1.5rem">Group by:</label>
+    <label>Group by:</label>
     <select id="group-select">
       <option value="sex">Sex</option>
       <option value="grade">Grade</option>
-      <option value="race">Race/Ethnicity</option>
+      <option value="age">Age</option>
+      <option value="race">Race / Ethnicity</option>
     </select>
   </div>
   <div id="bar-chart"></div>
@@ -69,8 +64,8 @@
      SECTION 4: PHONE — HEATMAP
 ═══════════════════════════════════════════════════ -->
 <section id="section-heatmap">
-  <h2>Phone Usage &amp; Wellbeing Heatmap</h2>
-  <p class="section-desc">Average wellbeing and behavioral metrics across phone addiction level groups (Teen Phone Addiction dataset, n ≈ 700).</p>
+  <h2>Phone Addiction &amp; Wellbeing Correlations</h2>
+  <p class="section-desc">Pearson correlation of each wellbeing metric with phone addiction level. Red = higher addiction associated with worse outcome; green = better. Sorted by strength.</p>
   <div id="heatmap-chart"></div>
 </section>
 
