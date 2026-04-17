@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teen Health Profile</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js" defer></script>
+  <script src="main.js" defer></script>
 </head>
 <body>
 
@@ -21,7 +22,21 @@
   <h2>Who Are We Looking At?</h2>
   <p class="section-desc">The YRBS starts as a survey cohort before it becomes a health profile. This opening view shows raw survey composition; later health estimates use the CDC survey weight.</p>
   <div class="orientation-layout">
-    <aside id="survey-passport" class="survey-passport"></aside>
+    <aside id="survey-passport" class="survey-passport">
+      <div class="passport-label">Dataset Passport</div>
+      <div class="passport-title">CDC YRBS 2023</div>
+      <div class="passport-metrics">
+        <div class="passport-metric">
+          <span class="passport-value">20,103</span>
+          <span class="passport-caption">student rows</span>
+        </div>
+        <div class="passport-metric">
+          <span class="passport-value">250</span>
+          <span class="passport-caption">variables after conversion</span>
+        </div>
+      </div>
+      <p class="passport-note">Loading survey composition...</p>
+    </aside>
     <div class="mosaic-panel">
       <div class="mosaic-toolbar">
         <div class="controls mosaic-controls">
@@ -30,7 +45,9 @@
         </div>
         <div id="mosaic-legend" class="mosaic-legend"></div>
       </div>
-      <div id="student-mosaic"></div>
+      <div id="student-mosaic">
+        <div class="loading-panel">Loading student mosaic...</div>
+      </div>
     </div>
   </div>
 </section>
@@ -143,7 +160,5 @@
   <div id="phone-corr-summary" class="phone-summary-strip"></div>
   <div id="heatmap-chart"></div>
 </section>
-
-<script src="main.js"></script>
 </body>
 </html>

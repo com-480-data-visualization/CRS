@@ -266,6 +266,24 @@ section h2 {
   border-radius: 8px;
   background: #fff;
   padding: 10px 12px;
+  min-height: 220px;
+}
+
+.loading-panel {
+  min-height: 198px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  font-size: 0.86rem;
+  background: repeating-linear-gradient(
+    -45deg,
+    #f8f9fb,
+    #f8f9fb 10px,
+    #f1f3f7 10px,
+    #f1f3f7 20px
+  );
+  border-radius: 6px;
 }
 
 /* ── Demographics grid ── */
