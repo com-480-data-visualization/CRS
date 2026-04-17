@@ -48,17 +48,16 @@ Grades 9-12
 Rows with survey weight
 250 converted variables
 
-Student mosaic
+Demographic association flow
 
-o o o o o o o o o o o o
-o o o o o o o o o o o o
-o o o o o o o o o o o o
+Grade  ===== ribbons =====  Sex
+Age    ===== ribbons =====  Race
 
-Color by: age / sex / grade / race
+Connect: age / sex / grade / race
 ```
 
-- **Purpose:** Establish the survey population before making health claims.
-- **Tool:** D3.js survey passport cards plus a dot mosaic, with each dot representing about 50 survey rows.
+- **Purpose:** Establish the survey population before interpreting patterns.
+- **Tool:** D3.js survey passport cards plus an interactive demographic association flow.
 - **Relevant lectures:** Marks and channels; data and scales; interaction.
 
 ### 2. Shallow Profile: National Teen-Health Signals
@@ -190,7 +189,7 @@ Self-esteem                   [----]
 | # | Piece | Dataset | Chart / feature | Independent? |
 |---|-------|---------|-----------------|--------------|
 | 1 | Data loading and weighted helpers | YRBS | Shared aggregation utilities | Yes |
-| 2 | Demographic orientation | YRBS | Survey passport and student mosaic | Yes |
+| 2 | Demographic orientation | YRBS | Survey passport and demographic association flow | Yes |
 | 3 | National profile scan | YRBS | Weighted scorecard cards | Yes |
 | 4 | Subgroup profile comparison | YRBS | Dot plot with demographic selector | Yes |
 | 5 | Grade profile shift | YRBS | Grade line/slope chart | Yes |

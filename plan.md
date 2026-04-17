@@ -41,7 +41,7 @@ The core story should feel like this:
 
 **Reader level:** Basic orientation.
 
-**Good message:** This is not a random web poll. It is a large, structured public-health survey of high-school students, and weighted estimates should be read as population-level prevalence rather than raw sample counts.
+**Good message:** This is not a random web poll. It is a large, structured survey of high-school students, and weighted estimates should be read as population-level prevalence rather than raw sample counts.
 
 Use:
 - Age: `Q1`
@@ -51,7 +51,7 @@ Use:
 - Weight: `WEIGHT`
 
 Visualization:
-- Survey passport plus student mosaic.
+- Survey passport plus demographic association flow.
 - Small note explaining weighted estimates.
 
 Design role:
@@ -249,7 +249,7 @@ What readers learn:
 
 The minimum viable story is:
 
-1. **Demographics:** Here is who the survey represents, shown as a survey passport and student mosaic.
+1. **Demographics:** Here is who the survey represents, shown as a survey passport and demographic association flow.
 2. **National profile:** Here are the obvious health signals.
 3. **Subgroup/grade profile:** Here is how the profile changes across students.
 4. **Risk role and risk stack:** Here is the deeper mental-health insight.

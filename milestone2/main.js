@@ -119,16 +119,16 @@ d3.csv("data/teen_phone_addiction_dataset.csv").then(data => {
 });
 
 // ═══════════════════════════════════════════════════════════
-// SECTION 1 — Demographics (interactive cross-filter)
+// SECTION 1 — Demographics (interactive association flow)
 // ═══════════════════════════════════════════════════════════
 
-// Shared reusable tooltip
-const demoTooltip = d3.select("body").append("div").attr("class", "demo-tooltip");
+const flowTooltip = d3.select("body").append("div").attr("class", "flow-tooltip dot-tooltip");
 
-const MOSAIC_UNIT = 50;
-let mosaicColorField = "grade";
+let flowLeftField = "grade";
+let flowRightField = "sex";
+let flowFocus = null;
 
-const MOSAIC_DIMENSIONS = [
+const DEMOGRAPHIC_DIMENSIONS = [
   {
     field: "grade",
     label: "Grade",
@@ -154,11 +154,11 @@ const MOSAIC_DIMENSIONS = [
   },
 ];
 
-function mosaicDimension(field) {
-  return MOSAIC_DIMENSIONS.find(d => d.field === field) ?? MOSAIC_DIMENSIONS[0];
+function demographicDimension(field) {
+  return DEMOGRAPHIC_DIMENSIONS.find(d => d.field === field) ?? DEMOGRAPHIC_DIMENSIONS[0];
 }
 
-function orderedMosaicCategories(data, dimension) {
+function orderedDemographicCategories(data, dimension) {
   const counts = d3.rollups(
     data.filter(d => d[dimension.field]),
     v => v.length,
@@ -202,104 +202,310 @@ function renderSurveyPassport(data) {
         <span class="passport-caption">variables after conversion</span>
       </div>
     </div>
-    <p class="passport-note">One mosaic dot represents about ${MOSAIC_UNIT} student rows. Health estimates below use weighted percentages.</p>
+    <p class="passport-note">The flow view uses raw survey rows to show survey composition. Later prevalence estimates use CDC survey weights.</p>
   `);
 }
 
-function renderMosaicControls(data) {
-  const controls = d3.select("#mosaic-controls");
-  controls.selectAll("*").remove();
+function renderFlowControls(data) {
+  const left = d3.select("#flow-left-select");
+  const right = d3.select("#flow-right-select");
 
-  MOSAIC_DIMENSIONS.forEach(dimension => {
-    controls.append("button")
-      .attr("type", "button")
-      .attr("class", `segment-button${dimension.field === mosaicColorField ? " active" : ""}`)
-      .text(dimension.label)
-      .on("click", () => {
-        mosaicColorField = dimension.field;
-        renderMosaicControls(data);
-        drawStudentMosaic(data);
-      });
+  [left, right].forEach(select => {
+    select.selectAll("*").remove();
+    select.selectAll("option")
+      .data(DEMOGRAPHIC_DIMENSIONS)
+      .join("option")
+      .attr("value", d => d.field)
+      .text(d => d.label);
+  });
+
+  left.property("value", flowLeftField);
+  right.property("value", flowRightField);
+
+  left.on("change", function () {
+    flowLeftField = this.value;
+    if (flowLeftField === flowRightField) {
+      flowRightField = DEMOGRAPHIC_DIMENSIONS.find(d => d.field !== flowLeftField).field;
+    }
+    normalizeFlowFocus();
+    renderFlowControls(data);
+    drawDemographicFlow(data);
+  });
+
+  right.on("change", function () {
+    flowRightField = this.value;
+    if (flowRightField === flowLeftField) {
+      flowLeftField = DEMOGRAPHIC_DIMENSIONS.find(d => d.field !== flowRightField).field;
+    }
+    normalizeFlowFocus();
+    renderFlowControls(data);
+    drawDemographicFlow(data);
+  });
+
+  d3.select("#flow-swap").on("click", () => {
+    [flowLeftField, flowRightField] = [flowRightField, flowLeftField];
+    normalizeFlowFocus();
+    renderFlowControls(data);
+    drawDemographicFlow(data);
   });
 }
 
-function drawStudentMosaic(data) {
-  d3.select("#student-mosaic").selectAll("*").remove();
-  d3.select("#mosaic-legend").selectAll("*").remove();
+function flowPath(flow, x0, x1) {
+  const mid = (x0 + x1) / 2;
+  return [
+    `M${x0},${flow.leftY0}`,
+    `C${mid},${flow.leftY0} ${mid},${flow.rightY0} ${x1},${flow.rightY0}`,
+    `L${x1},${flow.rightY1}`,
+    `C${mid},${flow.rightY1} ${mid},${flow.leftY1} ${x0},${flow.leftY1}`,
+    "Z",
+  ].join(" ");
+}
 
-  const dimension = mosaicDimension(mosaicColorField);
-  const categories = orderedMosaicCategories(data, dimension);
-  const totalForDimension = d3.sum(categories, d => d.count);
-  const dots = categories.flatMap(category => {
-    const count = Math.max(1, Math.round(category.count / MOSAIC_UNIT));
-    return d3.range(count).map(() => ({ ...category, totalForDimension }));
+function normalizeFlowFocus() {
+  if (flowFocus && flowFocus.field !== flowLeftField && flowFocus.field !== flowRightField) {
+    flowFocus = null;
+  }
+}
+
+function computeFlowNodes(categories, x, scale, gap) {
+  let y = 0;
+
+  return categories.map(category => {
+    const nodeHeight = Math.max(3, category.count * scale);
+    const node = {
+      ...category,
+      x,
+      y0: y,
+      y1: y + nodeHeight,
+    };
+    y += nodeHeight + gap;
+    return node;
+  });
+}
+
+function shortFlowLabel(value) {
+  return value.length > 26 ? `${value.slice(0, 23)}...` : value;
+}
+
+function drawDemographicFlow(data) {
+  d3.select("#demographic-flow-chart").selectAll("*").remove();
+
+  normalizeFlowFocus();
+
+  const leftDimension = demographicDimension(flowLeftField);
+  const rightDimension = demographicDimension(flowRightField);
+  const rows = data.filter(d => d[leftDimension.field] && d[rightDimension.field]);
+  const leftCategories = orderedDemographicCategories(rows, leftDimension);
+  const rightCategories = orderedDemographicCategories(rows, rightDimension);
+  const leftIndex = new Map(leftCategories.map((d, i) => [d.key, i]));
+  const rightIndex = new Map(rightCategories.map((d, i) => [d.key, i]));
+  const total = rows.length;
+
+  if (!total) {
+    d3.select("#flow-summary").text("No rows for this demographic pairing.");
+    d3.select("#demographic-flow-chart").html(`<div class="loading-panel">No demographic associations available.</div>`);
+    return;
+  }
+
+  const focusedRows = flowFocus
+    ? rows.filter(d => d[flowFocus.field] === flowFocus.key).length
+    : null;
+
+  d3.select("#flow-summary").html(`
+    <span>${flowFocus
+      ? `${focusedRows.toLocaleString()} of ${total.toLocaleString()} rows match ${flowFocus.key}`
+      : `${total.toLocaleString()} rows with known ${leftDimension.label.toLowerCase()} and ${rightDimension.label.toLowerCase()}`}</span>
+  `);
+
+  const margin = { top: 42, right: 220, bottom: 34, left: 210 };
+  const W = 980;
+  const H = Math.max(420, Math.max(leftCategories.length, rightCategories.length) * 48 + margin.top + margin.bottom);
+  const iw = W - margin.left - margin.right;
+  const ih = H - margin.top - margin.bottom;
+  const nodeWidth = 16;
+  const nodeGap = 8;
+  const leftX = 0;
+  const rightX = iw - nodeWidth;
+  const maxCategoryCount = Math.max(leftCategories.length, rightCategories.length);
+  const scale = (ih - nodeGap * Math.max(0, maxCategoryCount - 1)) / total;
+  const leftNodes = computeFlowNodes(leftCategories, leftX, scale, nodeGap);
+  const rightNodes = computeFlowNodes(rightCategories, rightX, scale, nodeGap);
+  const leftNodeMap = new Map(leftNodes.map(node => [node.key, node]));
+  const rightNodeMap = new Map(rightNodes.map(node => [node.key, node]));
+  const leftOffsets = new Map(leftNodes.map(node => [node.key, node.y0]));
+  const rightOffsets = new Map(rightNodes.map(node => [node.key, node.y0]));
+
+  const pairCounts = d3.rollups(
+    rows,
+    v => v.length,
+    d => d[leftDimension.field],
+    d => d[rightDimension.field]
+  );
+
+  const pairRows = [];
+  pairCounts.forEach(([leftKey, children]) => {
+    children.forEach(([rightKey, count]) => {
+      pairRows.push({ leftKey, rightKey, count });
+    });
   });
 
-  const columns = 34;
-  const cell = 16;
-  const radius = 5.5;
-  const margin = { top: 20, right: 20, bottom: 22, left: 20 };
-  const W = columns * cell + margin.left + margin.right;
-  const H = Math.ceil(dots.length / columns) * cell + margin.top + margin.bottom;
+  pairRows.sort((a, b) =>
+    d3.ascending(leftIndex.get(a.leftKey), leftIndex.get(b.leftKey)) ||
+    d3.ascending(rightIndex.get(a.rightKey), rightIndex.get(b.rightKey))
+  );
 
-  const svg = d3.select("#student-mosaic")
+  const flows = [];
+  pairRows.forEach(({ leftKey, rightKey, count }) => {
+    const leftNode = leftNodeMap.get(leftKey);
+    const rightNode = rightNodeMap.get(rightKey);
+    if (!leftNode || !rightNode) return;
+
+    const thickness = Math.max(1.5, count * scale);
+    const leftY0 = leftOffsets.get(leftKey);
+    const rightY0 = rightOffsets.get(rightKey);
+    leftOffsets.set(leftKey, leftY0 + thickness);
+    rightOffsets.set(rightKey, rightY0 + thickness);
+    flows.push({
+      leftKey,
+      rightKey,
+      count,
+      color: colorFor(leftKey, leftIndex.get(leftKey) ?? 0),
+      leftY0,
+      leftY1: leftY0 + thickness,
+      rightY0,
+      rightY1: rightY0 + thickness,
+    });
+  });
+
+  const flowMatchesFocus = flow => {
+    if (!flowFocus) return true;
+    return (flowFocus.field === leftDimension.field && flow.leftKey === flowFocus.key) ||
+      (flowFocus.field === rightDimension.field && flow.rightKey === flowFocus.key);
+  };
+
+  const focusOpacity = flow => flowFocus ? (flowMatchesFocus(flow) ? 0.64 : 0.05) : 0.32;
+
+  const svg = d3.select("#demographic-flow-chart")
     .append("svg")
     .attr("viewBox", `0 0 ${W} ${H}`)
     .attr("width", "100%")
-    .style("max-width", "760px")
+    .style("max-width", "980px")
     .style("display", "block");
+
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
   svg.append("text")
     .attr("x", margin.left)
-    .attr("y", 12)
-    .style("font-size", "11px")
+    .attr("y", 20)
+    .style("font-size", "12px")
     .style("font-weight", "700")
     .style("fill", "#5c6472")
-    .text(`${dots.length.toLocaleString()} dots, about ${MOSAIC_UNIT} rows per dot`);
+    .text(`${leftDimension.label} associated with ${rightDimension.label}`);
 
-  svg.append("g")
-    .attr("transform", `translate(${margin.left},${margin.top})`)
-    .selectAll("circle")
-    .data(dots)
-    .join("circle")
-    .attr("cx", (_d, i) => (i % columns) * cell + cell / 2)
-    .attr("cy", (_d, i) => Math.floor(i / columns) * cell + cell / 2)
-    .attr("r", radius)
+  const ribbon = g.append("g")
+    .attr("class", "flow-ribbons")
+    .selectAll("path")
+    .data(flows)
+    .join("path")
+    .attr("class", "flow-ribbon")
+    .attr("d", d => flowPath(d, leftX + nodeWidth, rightX))
     .attr("fill", d => d.color)
-    .attr("fill-opacity", 0.88)
-    .attr("stroke", "#fff")
-    .attr("stroke-width", 1)
+    .attr("fill-opacity", d => focusOpacity(d))
+    .attr("stroke", "none")
     .on("mouseover", (_event, d) => {
-      const pct = d.totalForDimension ? (d.count / d.totalForDimension * 100).toFixed(1) : "0.0";
-      demoTooltip
+      ribbon.attr("fill-opacity", f => f === d ? 0.76 : (flowMatchesFocus(f) ? 0.22 : 0.04));
+      const pct = total ? (d.count / total * 100).toFixed(1) : "0.0";
+      flowTooltip
         .style("opacity", 1)
-        .html(`<strong>${d.key}</strong><br>${d.count.toLocaleString()} rows<br>${pct}% of known ${dimension.label.toLowerCase()}`);
+        .html(`<strong>${d.leftKey} -> ${d.rightKey}</strong><br>${d.count.toLocaleString()} rows<br>${pct}% of shown rows`);
     })
     .on("mousemove", event => {
-      demoTooltip
+      flowTooltip
         .style("left", (event.pageX + 14) + "px")
-        .style("top", (event.pageY - 42) + "px");
+        .style("top", (event.pageY - 46) + "px");
     })
-    .on("mouseout", () => demoTooltip.style("opacity", 0));
+    .on("mouseout", () => {
+      ribbon.attr("fill-opacity", d => focusOpacity(d));
+      flowTooltip.style("opacity", 0);
+    });
 
-  const legend = d3.select("#mosaic-legend");
-  categories.forEach(category => {
-    const pct = totalForDimension ? (category.count / totalForDimension * 100).toFixed(1) : "0.0";
-    const item = legend.append("div").attr("class", "legend-item");
-    item.append("span")
-      .attr("class", "legend-swatch")
-      .style("background", category.color);
-    item.append("span")
-      .attr("class", "legend-label")
-      .text(`${category.key} ${pct}%`);
-  });
+  function drawNodes(nodes, side, dimension) {
+    const nodeG = g.append("g").attr("class", `flow-nodes flow-nodes-${side}`);
+    const isLeft = side === "left";
+    const node = nodeG.selectAll("g")
+      .data(nodes)
+      .join("g")
+      .attr("class", "flow-node")
+      .style("cursor", "pointer")
+      .on("click", (_event, d) => {
+        const isSameFocus = flowFocus &&
+          flowFocus.field === dimension.field &&
+          flowFocus.key === d.key;
+        flowFocus = isSameFocus ? null : { field: dimension.field, key: d.key };
+        drawDemographicFlow(data);
+      })
+      .on("mouseover", (event, d) => {
+        const pct = total ? (d.count / total * 100).toFixed(1) : "0.0";
+        flowTooltip
+          .style("opacity", 1)
+          .style("left", (event.pageX + 14) + "px")
+          .style("top", (event.pageY - 46) + "px")
+          .html(`<strong>${dimension.label}: ${d.key}</strong><br>${d.count.toLocaleString()} rows<br>${pct}% of shown rows`);
+      })
+      .on("mousemove", event => {
+        flowTooltip
+          .style("left", (event.pageX + 14) + "px")
+          .style("top", (event.pageY - 46) + "px");
+      })
+      .on("mouseout", () => flowTooltip.style("opacity", 0));
+
+    node.append("rect")
+      .attr("x", d => d.x)
+      .attr("y", d => d.y0)
+      .attr("width", nodeWidth)
+      .attr("height", d => d.y1 - d.y0)
+      .attr("rx", 4)
+      .attr("fill", d => isLeft ? colorFor(d.key, leftIndex.get(d.key) ?? 0) : "#8d97a8")
+      .attr("fill-opacity", d => {
+        if (!flowFocus) return 0.92;
+        return flowFocus.field === dimension.field && flowFocus.key === d.key ? 1 : 0.36;
+      })
+      .attr("stroke", d => flowFocus && flowFocus.field === dimension.field && flowFocus.key === d.key ? "#20283a" : "none")
+      .attr("stroke-width", 2);
+
+    node.append("text")
+      .attr("x", d => isLeft ? d.x - 10 : d.x + nodeWidth + 10)
+      .attr("y", d => (d.y0 + d.y1) / 2)
+      .attr("dy", "0.35em")
+      .attr("text-anchor", isLeft ? "end" : "start")
+      .style("font-size", "11px")
+      .style("font-weight", "700")
+      .style("fill", "#303849")
+      .text(d => {
+        const pct = total ? (d.count / total * 100).toFixed(1) : "0.0";
+        return `${shortFlowLabel(d.key)} ${pct}%`;
+      });
+
+    svg.append("text")
+      .attr("x", margin.left + (isLeft ? 0 : rightX + nodeWidth))
+      .attr("y", 36)
+      .attr("text-anchor", isLeft ? "start" : "start")
+      .style("font-size", "11px")
+      .style("font-weight", "800")
+      .style("letter-spacing", "0.06em")
+      .style("text-transform", "uppercase")
+      .style("fill", "#4e79a7")
+      .text(dimension.label);
+  }
+
+  drawNodes(leftNodes, "left", leftDimension);
+  drawNodes(rightNodes, "right", rightDimension);
 }
 
 function drawDemographics(allData) {
-  _allDemoData = allData;
   renderSurveyPassport(allData);
-  renderMosaicControls(allData);
-  drawStudentMosaic(allData);
+  renderFlowControls(allData);
+  drawDemographicFlow(allData);
 }
 
 // ═══════════════════════════════════════════════════════════

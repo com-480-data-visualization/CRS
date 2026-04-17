@@ -133,7 +133,7 @@ section h2 {
   cursor: pointer;
 }
 
-/* ── Orientation passport + mosaic ── */
+/* ── Orientation passport + demographic flow ── */
 .orientation-layout {
   display: grid;
   grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
@@ -197,29 +197,30 @@ section h2 {
   border-top: 1px solid #edf0f5;
 }
 
-.mosaic-panel {
+.association-panel {
   min-width: 0;
 }
 
-.mosaic-toolbar {
+.association-toolbar {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
-.mosaic-controls {
+.association-controls {
   margin-bottom: 0;
 }
 
-.segmented-control {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 6px;
+.flow-arrow {
+  color: #6b7280;
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
-.segment-button {
+.flow-swap {
   min-height: 32px;
   padding: 6px 10px;
   border: 1px solid #d6dbe5;
@@ -230,43 +231,34 @@ section h2 {
   cursor: pointer;
 }
 
-.segment-button.active {
+.flow-swap:hover {
   border-color: #20283a;
-  background: #20283a;
-  color: #fff;
-  font-weight: 700;
+  color: #20283a;
 }
 
-.mosaic-legend {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 6px 10px;
-  max-width: 470px;
+.flow-summary {
+  max-width: 420px;
+  color: #5c6472;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  text-align: right;
 }
 
-.legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: #4d5666;
-  font-size: 0.74rem;
-  white-space: nowrap;
-}
-
-.legend-swatch {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  flex: 0 0 auto;
-}
-
-#student-mosaic {
+#demographic-flow-chart {
   border: 1px solid #e3e7ef;
   border-radius: 8px;
   background: #fff;
   padding: 10px 12px;
-  min-height: 220px;
+  min-height: 360px;
+  overflow-x: auto;
+}
+
+.flow-ribbon {
+  transition: fill-opacity 0.12s ease;
+}
+
+.flow-node rect {
+  transition: fill-opacity 0.12s ease, stroke 0.12s ease;
 }
 
 .loading-panel {
@@ -635,12 +627,12 @@ svg text {
     grid-template-columns: 1fr;
   }
 
-  .mosaic-toolbar {
+  .association-toolbar {
     flex-direction: column;
   }
 
-  .mosaic-legend {
-    justify-content: flex-start;
+  .flow-summary {
+    text-align: left;
   }
 
   .risk-layout {

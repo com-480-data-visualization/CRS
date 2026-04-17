@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teen Health Profile</title>
-  <link rel="stylesheet" href="style.css?v=20260417b">
+  <link rel="stylesheet" href="style.css?v=20260417d">
   <script src="d3.v7.min.js?v=20260417c" defer></script>
-  <script src="main.js?v=20260417c" defer></script>
+  <script src="main.js?v=20260417d" defer></script>
 </head>
 <body>
 
@@ -20,7 +20,7 @@
 <section id="section-demographics">
   <p class="section-kicker">1. Orientation</p>
   <h2>Who Are We Looking At?</h2>
-  <p class="section-desc">The YRBS starts as a survey cohort before it becomes a health profile. This opening view shows raw survey composition; later health estimates use the CDC survey weight.</p>
+  <p class="section-desc">The YRBS starts with a survey cohort. This opening view shows raw survey composition so the denominator is visible before any interpretation.</p>
   <div class="orientation-layout">
     <aside id="survey-passport" class="survey-passport">
       <div class="passport-label">Dataset Passport</div>
@@ -37,16 +37,19 @@
       </div>
       <p class="passport-note">Loading survey composition...</p>
     </aside>
-    <div class="mosaic-panel">
-      <div class="mosaic-toolbar">
-        <div class="controls mosaic-controls">
-          <label>Color by:</label>
-          <div id="mosaic-controls" class="segmented-control" aria-label="Mosaic color dimension"></div>
+    <div class="association-panel">
+      <div class="association-toolbar">
+        <div class="controls association-controls">
+          <label>Connect:</label>
+          <select id="flow-left-select" aria-label="Left demographic dimension"></select>
+          <span class="flow-arrow">to</span>
+          <select id="flow-right-select" aria-label="Right demographic dimension"></select>
+          <button id="flow-swap" class="flow-swap" type="button">Swap</button>
         </div>
-        <div id="mosaic-legend" class="mosaic-legend"></div>
+        <div id="flow-summary" class="flow-summary"></div>
       </div>
-      <div id="student-mosaic">
-        <div class="loading-panel">Loading student mosaic...</div>
+      <div id="demographic-flow-chart">
+        <div class="loading-panel">Loading demographic associations...</div>
       </div>
     </div>
   </div>
