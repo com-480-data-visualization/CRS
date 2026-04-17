@@ -41,18 +41,24 @@ Sexual health is included as relationship safety and prevention, not as moral ju
 ### 1. Orientation: Who Are We Looking At?
 
 ```text
-YRBS sample composition
+YRBS dataset passport
 
-Age     [bar chart]
-Sex     [bar chart]
-Grade   [bar chart]
-Race    [bar chart]
+20,103 student rows
+Grades 9-12
+Rows with survey weight
+250 converted variables
 
-Note: health percentages use WEIGHT, not raw bar counts.
+Student mosaic
+
+o o o o o o o o o o o o
+o o o o o o o o o o o o
+o o o o o o o o o o o o
+
+Color by: age / sex / grade / race
 ```
 
 - **Purpose:** Establish the survey population before making health claims.
-- **Tool:** D3.js bar charts with a lightweight cross-filter.
+- **Tool:** D3.js survey passport cards plus a dot mosaic, with each dot representing about 50 survey rows.
 - **Relevant lectures:** Marks and channels; data and scales; interaction.
 
 ### 2. Shallow Profile: National Teen-Health Signals
@@ -184,7 +190,7 @@ Self-esteem                   [----]
 | # | Piece | Dataset | Chart / feature | Independent? |
 |---|-------|---------|-----------------|--------------|
 | 1 | Data loading and weighted helpers | YRBS | Shared aggregation utilities | Yes |
-| 2 | Demographic orientation | YRBS | Bar charts and cross-filter | Yes |
+| 2 | Demographic orientation | YRBS | Survey passport and student mosaic | Yes |
 | 3 | National profile scan | YRBS | Weighted scorecard cards | Yes |
 | 4 | Subgroup profile comparison | YRBS | Dot plot with demographic selector | Yes |
 | 5 | Grade profile shift | YRBS | Grade line/slope chart | Yes |

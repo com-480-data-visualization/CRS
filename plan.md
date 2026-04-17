@@ -51,7 +51,7 @@ Use:
 - Weight: `WEIGHT`
 
 Visualization:
-- Compact demographic overview.
+- Survey passport plus student mosaic.
 - Small note explaining weighted estimates.
 
 Design role:
@@ -249,7 +249,7 @@ What readers learn:
 
 The minimum viable story is:
 
-1. **Demographics:** Here is who the survey represents.
+1. **Demographics:** Here is who the survey represents, shown as a survey passport and student mosaic.
 2. **National profile:** Here are the obvious health signals.
 3. **Subgroup/grade profile:** Here is how the profile changes across students.
 4. **Risk role and risk stack:** Here is the deeper mental-health insight.

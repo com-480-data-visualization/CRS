@@ -19,8 +19,20 @@
 <section id="section-demographics">
   <p class="section-kicker">1. Orientation</p>
   <h2>Who Are We Looking At?</h2>
-  <p class="section-desc">Sample composition of the 20,103 surveyed students. These bars show raw survey rows; health estimates below use the CDC survey weight.</p>
-  <div id="demo-charts" class="chart-row"></div>
+  <p class="section-desc">The YRBS starts as a survey cohort before it becomes a health profile. This opening view shows raw survey composition; later health estimates use the CDC survey weight.</p>
+  <div class="orientation-layout">
+    <aside id="survey-passport" class="survey-passport"></aside>
+    <div class="mosaic-panel">
+      <div class="mosaic-toolbar">
+        <div class="controls mosaic-controls">
+          <label>Color by:</label>
+          <div id="mosaic-controls" class="segmented-control" aria-label="Mosaic color dimension"></div>
+        </div>
+        <div id="mosaic-legend" class="mosaic-legend"></div>
+      </div>
+      <div id="student-mosaic"></div>
+    </div>
+  </div>
 </section>
 
 <!-- SECTION 2: SHALLOW NATIONAL PROFILE -->

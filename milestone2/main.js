@@ -82,10 +82,11 @@ d3.csv("data/yrbs2023_readable.csv").then(raw => {
     d.age   = d.Q1_label;
   });
 
-  // Filter out rows with missing key demographics
+  drawDemographics(raw);
+
+  // Filter out rows with missing key demographics for the analytic views.
   const data = raw.filter(d => d.sex && d.grade);
 
-  drawDemographics(data);
   drawDotPlot(data, "sex");
   drawGradeShift(data);
   initRiskProfiler(data);
@@ -163,12 +164,181 @@ function applyDemoFilters(data, excluding = null) {
 // Shared reusable tooltip
 const demoTooltip = d3.select("body").append("div").attr("class", "demo-tooltip");
 
+const MOSAIC_UNIT = 50;
+let mosaicColorField = "grade";
+
+const MOSAIC_DIMENSIONS = [
+  {
+    field: "grade",
+    label: "Grade",
+    order: ["9th grade", "10th grade", "11th grade", "12th grade", "Ungraded or other grade"],
+  },
+  {
+    field: "sex",
+    label: "Sex",
+    order: ["Male", "Female"],
+  },
+  {
+    field: "race",
+    label: "Race / Ethnicity",
+    order: ["White", "Multiple - Hispanic", "Black or African American",
+            "Multiple - Non-Hispanic", "Am Indian/Alaska Native",
+            "Hispanic/Latino", "Asian", "Native Hawaiian/Other PI"],
+  },
+  {
+    field: "age",
+    label: "Age",
+    order: ["12 years old or younger", "13 years old", "14 years old",
+            "15 years old", "16 years old", "17 years old", "18 years old or older"],
+  },
+];
+
+function mosaicDimension(field) {
+  return MOSAIC_DIMENSIONS.find(d => d.field === field) ?? MOSAIC_DIMENSIONS[0];
+}
+
+function orderedMosaicCategories(data, dimension) {
+  const counts = d3.rollups(
+    data.filter(d => d[dimension.field]),
+    v => v.length,
+    d => d[dimension.field]
+  );
+  const countMap = new Map(counts);
+  const orderedKeys = [
+    ...dimension.order.filter(key => countMap.has(key)),
+    ...counts.map(([key]) => key).filter(key => !dimension.order.includes(key)).sort(d3.ascending),
+  ];
+
+  return orderedKeys.map((key, i) => ({
+    key,
+    count: countMap.get(key),
+    color: colorFor(key, i),
+  }));
+}
+
+function renderSurveyPassport(data) {
+  const rowsWithWeight = data.filter(d => weightOf(d)).length;
+  const gradeRows = data.filter(d => d.grade && d.grade !== "Ungraded or other grade").length;
+
+  d3.select("#survey-passport").html(`
+    <div class="passport-label">Dataset Passport</div>
+    <div class="passport-title">CDC YRBS 2023</div>
+    <div class="passport-metrics">
+      <div class="passport-metric">
+        <span class="passport-value">${data.length.toLocaleString()}</span>
+        <span class="passport-caption">student rows</span>
+      </div>
+      <div class="passport-metric">
+        <span class="passport-value">${gradeRows.toLocaleString()}</span>
+        <span class="passport-caption">rows in grades 9-12</span>
+      </div>
+      <div class="passport-metric">
+        <span class="passport-value">${rowsWithWeight.toLocaleString()}</span>
+        <span class="passport-caption">rows with survey weight</span>
+      </div>
+      <div class="passport-metric">
+        <span class="passport-value">250</span>
+        <span class="passport-caption">variables after conversion</span>
+      </div>
+    </div>
+    <p class="passport-note">One mosaic dot represents about ${MOSAIC_UNIT} student rows. Health estimates below use weighted percentages.</p>
+  `);
+}
+
+function renderMosaicControls(data) {
+  const controls = d3.select("#mosaic-controls");
+  controls.selectAll("*").remove();
+
+  MOSAIC_DIMENSIONS.forEach(dimension => {
+    controls.append("button")
+      .attr("type", "button")
+      .attr("class", `segment-button${dimension.field === mosaicColorField ? " active" : ""}`)
+      .text(dimension.label)
+      .on("click", () => {
+        mosaicColorField = dimension.field;
+        renderMosaicControls(data);
+        drawStudentMosaic(data);
+      });
+  });
+}
+
+function drawStudentMosaic(data) {
+  d3.select("#student-mosaic").selectAll("*").remove();
+  d3.select("#mosaic-legend").selectAll("*").remove();
+
+  const dimension = mosaicDimension(mosaicColorField);
+  const categories = orderedMosaicCategories(data, dimension);
+  const totalForDimension = d3.sum(categories, d => d.count);
+  const dots = categories.flatMap(category => {
+    const count = Math.max(1, Math.round(category.count / MOSAIC_UNIT));
+    return d3.range(count).map(() => ({ ...category, totalForDimension }));
+  });
+
+  const columns = 34;
+  const cell = 16;
+  const radius = 5.5;
+  const margin = { top: 20, right: 20, bottom: 22, left: 20 };
+  const W = columns * cell + margin.left + margin.right;
+  const H = Math.ceil(dots.length / columns) * cell + margin.top + margin.bottom;
+
+  const svg = d3.select("#student-mosaic")
+    .append("svg")
+    .attr("viewBox", `0 0 ${W} ${H}`)
+    .attr("width", "100%")
+    .style("max-width", "760px")
+    .style("display", "block");
+
+  svg.append("text")
+    .attr("x", margin.left)
+    .attr("y", 12)
+    .style("font-size", "11px")
+    .style("font-weight", "700")
+    .style("fill", "#5c6472")
+    .text(`${dots.length.toLocaleString()} dots, about ${MOSAIC_UNIT} rows per dot`);
+
+  svg.append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`)
+    .selectAll("circle")
+    .data(dots)
+    .join("circle")
+    .attr("cx", (_d, i) => (i % columns) * cell + cell / 2)
+    .attr("cy", (_d, i) => Math.floor(i / columns) * cell + cell / 2)
+    .attr("r", radius)
+    .attr("fill", d => d.color)
+    .attr("fill-opacity", 0.88)
+    .attr("stroke", "#fff")
+    .attr("stroke-width", 1)
+    .on("mouseover", (_event, d) => {
+      const pct = d.totalForDimension ? (d.count / d.totalForDimension * 100).toFixed(1) : "0.0";
+      demoTooltip
+        .style("opacity", 1)
+        .html(`<strong>${d.key}</strong><br>${d.count.toLocaleString()} rows<br>${pct}% of known ${dimension.label.toLowerCase()}`);
+    })
+    .on("mousemove", event => {
+      demoTooltip
+        .style("left", (event.pageX + 14) + "px")
+        .style("top", (event.pageY - 42) + "px");
+    })
+    .on("mouseout", () => demoTooltip.style("opacity", 0));
+
+  const legend = d3.select("#mosaic-legend");
+  categories.forEach(category => {
+    const pct = totalForDimension ? (category.count / totalForDimension * 100).toFixed(1) : "0.0";
+    const item = legend.append("div").attr("class", "legend-item");
+    item.append("span")
+      .attr("class", "legend-swatch")
+      .style("background", category.color);
+    item.append("span")
+      .attr("class", "legend-label")
+      .text(`${category.key} ${pct}%`);
+  });
+}
+
 function drawDemographics(allData) {
   _allDemoData = allData;
-  // Set grid columns proportional to naturalW so all charts render at equal height
-  d3.select("#demo-charts")
-    .style("grid-template-columns", DEMO_SPECS.map(s => `${s.naturalW}fr`).join(" "));
-  renderDemographics(allData);
+  renderSurveyPassport(allData);
+  renderMosaicControls(allData);
+  drawStudentMosaic(allData);
 }
 
 // Keep a reference so filters can trigger re-renders
