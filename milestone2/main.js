@@ -1866,3 +1866,1044 @@ function drawCorrelationChart(data) {
     leg.append("text").attr("x", i * 245 + 16).attr("y", 10).style("font-size", "11px").style("fill", "#555").text(lbl);
   });
 }
+
+// ─────────────────────────────────────────────
+// SOCIAL MEDIA ADDICTION DATASET — SHARED HELPERS
+// ─────────────────────────────────────────────
+const SMA_PLATFORM_META = {
+  "Instagram": { slug: "instagram", color: "#E4405F" },
+  "TikTok":    { slug: "tiktok",    color: "#000000" },
+  "Facebook":  { slug: "facebook",  color: "#1877F2" },
+  "WhatsApp":  { slug: "whatsapp",  color: "#25D366" },
+  "Twitter":   { slug: "x",         color: "#000000", letter: "X" },
+  "LinkedIn":  { slug: "linkedin", color: "#0A66C2" },
+  "WeChat":    { slug: "wechat",    color: "#07C160" },
+  "Snapchat":  { slug: "snapchat",  color: "#FFFC00" },
+  "LINE":      { slug: "line",      color: "#00C300" },
+  "KakaoTalk": { slug: "kakaotalk", color: "#FFCD00", logoColor: "black" },
+  "VKontakte": { slug: "vk",        color: "#0077FF" },
+  "YouTube":   { slug: "youtube",   color: "#FF0000" }
+};
+
+function smaPlatformOf(p) {
+  return SMA_PLATFORM_META[p] || { slug: null, color: "#888", letter: (p || "?").charAt(0).toUpperCase() };
+}
+
+function smaLogoUrl(meta, platform) {
+  if (platform === "LinkedIn") return "LinkedIn_logo.png";
+  if (!meta.slug) return null;
+  const color = meta.logoColor || "white";
+  return `https://cdn.simpleicons.org/${meta.slug}/${color}`;
+}
+
+// ─────────────────────────────────────────────
+// SMA ORIENTATION: DEMOGRAPHIC FLOW
+// ─────────────────────────────────────────────
+const SMA_FLOW_DIMENSIONS = {
+  Gender: {
+    label: "Gender",
+    categories: ["Female", "Male"],
+    read: r => r.Gender?.trim() || null
+  },
+  Age: {
+    label: "Age",
+    categories: ["18", "19", "20", "21", "22", "23", "24"],
+    read: r => r.Age ? String(+r.Age) : null
+  },
+  Academic_Level: {
+    label: "Academic level",
+    categories: ["High School", "Undergraduate", "Graduate"],
+    read: r => r.Academic_Level?.trim() || null
+  },
+  Relationship_Status: {
+    label: "Relationship",
+    categories: ["Single", "In Relationship", "Complicated"],
+    read: r => r.Relationship_Status?.trim() || null
+  }
+};
+
+function drawSmaDemographicFlow(data) {
+  const leftSelect  = document.getElementById("sma-flow-left");
+  const rightSelect = document.getElementById("sma-flow-right");
+  const swapButton  = document.getElementById("sma-flow-swap");
+  if (!leftSelect || !rightSelect) return;
+
+  fillDimensionSelect(leftSelect,  "Gender");
+  fillDimensionSelect(rightSelect, "Academic_Level");
+
+  const render = () => renderSmaFlow(data, leftSelect.value, rightSelect.value);
+  leftSelect.addEventListener("change", render);
+  rightSelect.addEventListener("change", render);
+  swapButton?.addEventListener("click", () => {
+    [leftSelect.value, rightSelect.value] = [rightSelect.value, leftSelect.value];
+    render();
+  });
+
+  render();
+  window.addEventListener("resize", render);
+}
+
+function fillDimensionSelect(select, defaultKey) {
+  select.innerHTML = "";
+  for (const [key, { label }] of Object.entries(SMA_FLOW_DIMENSIONS)) {
+    const opt = document.createElement("option");
+    opt.value = key;
+    opt.textContent = label;
+    if (key === defaultKey) opt.selected = true;
+    select.appendChild(opt);
+  }
+}
+
+function renderSmaFlow(data, leftKey, rightKey) {
+  const container = document.getElementById("sma-flow-chart");
+  if (!container) return;
+  const left  = SMA_FLOW_DIMENSIONS[leftKey];
+  const right = SMA_FLOW_DIMENSIONS[rightKey];
+
+  d3.select(container).selectAll("*").remove();
+
+  const width  = container.clientWidth || 540;
+  const height = 320;
+  const svg = d3.select(container).append("svg")
+    .attr("width", width).attr("height", height)
+    .style("font-family", "Segoe UI, Arial, sans-serif");
+
+  // Cross-tabulate left × right (skip rows that miss either side)
+  const counts = d3.rollup(
+    data.filter(r => left.read(r) && right.read(r)),
+    rows => rows.length,
+    r => left.read(r),
+    r => right.read(r)
+  );
+
+  // Prefix indexes with "L:" / "R:" so the same label on both sides can't collide
+  const nodes = [
+    ...left.categories.map(label  => ({ side: "L", label })),
+    ...right.categories.map(label => ({ side: "R", label }))
+  ];
+  const indexOf = new Map(nodes.map((n, i) => [`${n.side}:${n.label}`, i]));
+
+  const links = [];
+  for (const [lv, byRight] of counts) {
+    for (const [rv, value] of byRight) {
+      const s = indexOf.get(`L:${lv}`);
+      const t = indexOf.get(`R:${rv}`);
+      if (s !== undefined && t !== undefined) links.push({ source: s, target: t, value });
+    }
+  }
+
+  const sankey = d3.sankey()
+    .nodeWidth(12)
+    .nodePadding(14)
+    .extent([[120, 12], [width - 120, height - 12]]);
+
+  // sankey() mutates its inputs, so feed it copies
+  const layout = sankey({
+    nodes: nodes.map(n => ({ ...n })),
+    links: links.map(l => ({ ...l }))
+  });
+
+  const color = d3.scaleOrdinal(d3.schemeTableau10).domain(left.categories);
+
+  svg.append("g")
+    .attr("fill", "none")
+    .selectAll("path")
+    .data(layout.links)
+    .join("path")
+    .attr("d", d3.sankeyLinkHorizontal())
+    .attr("stroke", l => color(l.source.label))
+    .attr("stroke-opacity", 0.35)
+    .attr("stroke-width", l => Math.max(1, l.width));
+
+  const node = svg.append("g")
+    .selectAll("g")
+    .data(layout.nodes)
+    .join("g");
+
+  node.append("rect")
+    .attr("x", d => d.x0).attr("y", d => d.y0)
+    .attr("width",  d => d.x1 - d.x0)
+    .attr("height", d => Math.max(1, d.y1 - d.y0))
+    .attr("fill", d => d.side === "L" ? color(d.label) : "#7a8398");
+
+  node.append("text")
+    .attr("x", d => d.side === "L" ? d.x0 - 8 : d.x1 + 8)
+    .attr("y", d => (d.y0 + d.y1) / 2)
+    .attr("dy", "0.35em")
+    .attr("text-anchor", d => d.side === "L" ? "end" : "start")
+    .style("font-size", "12px").style("fill", "#1a1a2e")
+    .text(d => `${d.label}  (${d.value})`);
+}
+
+// ─────────────────────────────────────────────
+// SECTION 9: WORLD MAP — SOCIAL MEDIA ADDICTION
+// ─────────────────────────────────────────────
+function drawWorldMap(addictionData, topoData) {
+  const container = document.getElementById("world-map-container");
+  const svg = d3.select("#world-map");
+  if (!container || svg.empty()) return;
+
+  const width  = Math.max(container.clientWidth, 800);
+  const height = 700;
+  const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+  const MIN_SAMPLE = 5;
+
+  // Some country names differ between the CSV and the topojson; map both ways.
+  const csvToTopo = {
+    "USA": "United States of America",
+    "UK":  "United Kingdom",
+    "Czech Republic": "Czechia",
+    "Trinidad": "Trinidad and Tobago"
+  };
+  const topoToCsv = Object.fromEntries(Object.entries(csvToTopo).map(([k, v]) => [v, k]));
+
+  // ── A. Aggregate by country ──────────────────────────────────────────────
+  const countries = new Map(
+    Array.from(d3.group(addictionData.filter(d => d.Country?.trim()), d => d.Country.trim()))
+      .map(([name, rows]) => {
+        const platforms = Array.from(
+          d3.rollup(rows, v => v.length, d => d.Most_Used_Platform?.trim() || "Unknown")
+        ).sort((a, b) => b[1] - a[1]);
+        return [name, {
+          mainPlatform: platforms[0]?.[0] ?? "Unknown",
+          allPlatforms: platforms,
+          avgUsage:     d3.mean(rows, d => +d.Avg_Daily_Usage_Hours) || 0,
+          studentCount: rows.length
+        }];
+      })
+  );
+
+  const featureToCsvName = f => topoToCsv[f.properties?.name || f.id] || (f.properties?.name || f.id);
+  const featureToData    = f => countries.get(featureToCsvName(f));
+
+  const reliable = Array.from(countries.values()).filter(d => d.studentCount >= MIN_SAMPLE);
+  const usageExtent = d3.extent(reliable, d => d.avgUsage);
+  const usageColor = d3.scaleLinear()
+    .domain(usageExtent.every(Number.isFinite) ? usageExtent : [2, 8])
+    .range(["#fff5b1", "#b34700"])
+    .interpolate(d3.interpolateRgb);
+
+  // ── B. Geo projection and badge geometry ────────────────────────────────
+  const features = topojson.feature(topoData, topoData.objects.countries).features;
+  const projection = d3.geoNaturalEarth1()
+    .fitSize(
+      [width - margin.left - margin.right, height - margin.top - margin.bottom],
+      { type: "FeatureCollection", features }
+    );
+  const path = d3.geoPath(projection);
+
+  // For countries with overseas territories, the geographic centroid lands
+  // somewhere unhelpful (e.g. France's centroid sits near French Guiana).
+  // Override with a point on the mainland.
+  const manualCentroids = {
+    "France":                   [2.5, 46.5],
+    "United States of America": [-98, 39],
+    "Netherlands":              [5.3, 52.1],
+    "Spain":                    [-4, 40],
+    "United Kingdom":           [-3.5, 54.5],
+    "Denmark":                  [9.5, 56],
+    "Canada":                   [-102, 60]
+  };
+  const manualRadii = { "France": 8 };
+
+  const centroidFor = f => projection(manualCentroids[f.properties?.name] ?? d3.geoCentroid(f));
+
+  const radiusFor = f => {
+    const override = manualRadii[f.properties?.name];
+    if (override != null) return override;
+    const [[x0, y0], [x1, y1]] = path.bounds(f);
+    if (!Number.isFinite(x0)) return 8;
+    const minDim = Math.min(x1 - x0, y1 - y0);
+    return Math.max(6, Math.min(14, minDim * 0.10));
+  };
+
+  // ── C. Build the static SVG structure ────────────────────────────────────
+  svg.selectAll("*").remove();
+  svg.attr("width", width).attr("height", height);
+
+  // Hatch pattern reserved for low-confidence (n < 5) countries
+  const pattern = svg.append("defs").append("pattern")
+    .attr("id", "low-sample-pattern")
+    .attr("patternUnits", "userSpaceOnUse")
+    .attr("width", 6).attr("height", 6)
+    .attr("patternTransform", "rotate(45)");
+  pattern.append("rect").attr("width", 6).attr("height", 6).attr("fill", "#ececec");
+  pattern.append("line").attr("y2", 6).attr("stroke", "#c4c4c4").attr("stroke-width", 1.5);
+
+  const tooltip = d3.select("body").selectAll(".map-tooltip").data([1])
+    .join("div").attr("class", "map-tooltip dot-tooltip");
+
+  function moveTooltip(event) {
+    tooltip.style("left", (event.pageX + 12) + "px")
+           .style("top",  (event.pageY - 32) + "px");
+  }
+
+  function showCountryTooltip(event, csvName, data) {
+    if (!data) return;
+    const platformsHtml = data.allPlatforms
+      .map(([p, c]) => `${p}: ${c} (${(c / data.studentCount * 100).toFixed(1)}%)`)
+      .join("<br>");
+    const note = data.studentCount < MIN_SAMPLE
+      ? `<br><em style="color: #f5a623;">Low confidence (n=${data.studentCount})</em>` : "";
+    tooltip.style("opacity", 1)
+      .html(`<strong>${csvName}</strong><br>
+             <strong style="font-size:11px;color:#ccc;">Platforms Used:</strong><br>${platformsHtml}<br>
+             <strong style="font-size:11px;color:#ccc;">Avg Daily Usage:</strong> ${data.avgUsage.toFixed(1)} h<br>
+             <strong style="font-size:11px;color:#ccc;">Students:</strong> ${data.studentCount}${note}`);
+    moveTooltip(event);
+  }
+
+  const zoomG = svg.append("g").attr("class", "zoom-group");
+  const g = zoomG.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // ── D. Country paths ─────────────────────────────────────────────────────
+  // Fill rule depends on view mode: by default countries are coloured by their
+  // average daily usage; when a platform is selected, they're coloured by that
+  // platform's share of users.
+  let view = { mode: "usage", platform: null, scale: null, percentages: null };
+
+  function fillFor(feature) {
+    const data = featureToData(feature);
+    if (!data) return "#f4f4f4";
+    if (data.studentCount < MIN_SAMPLE) return "url(#low-sample-pattern)";
+    if (view.mode === "usage") return usageColor(data.avgUsage);
+    return view.scale(view.percentages.get(featureToCsvName(feature)) ?? 0);
+  }
+
+  const countryPaths = g.selectAll("path.country")
+    .data(features)
+    .join("path")
+    .attr("class", "country")
+    .attr("d", path)
+    .attr("fill", fillFor)
+    .attr("stroke", "#ccc").attr("stroke-width", 0.5)
+    .on("mouseover", function(event, f) {
+      d3.select(this).attr("stroke", "#333").attr("stroke-width", 1.5);
+      showCountryTooltip(event, featureToCsvName(f), featureToData(f));
+    })
+    .on("mousemove", moveTooltip)
+    .on("mouseout", function() {
+      d3.select(this).attr("stroke", "#ccc").attr("stroke-width", 0.5);
+      tooltip.style("opacity", 0);
+    });
+
+  // ── E. Badges: one per reliable country, with platform logo or letter ────
+  const badgeData = features
+    .map(f => ({
+      csvName:  featureToCsvName(f),
+      data:     featureToData(f),
+      centroid: centroidFor(f),
+      radius:   radiusFor(f),
+      feature:  f
+    }))
+    .filter(b => b.data && b.data.studentCount >= MIN_SAMPLE);
+
+  const badges = g.selectAll("g.country-badge")
+    .data(badgeData)
+    .join("g")
+    .attr("class", "country-badge")
+    .attr("transform", b => `translate(${b.centroid[0]},${b.centroid[1]})`)
+    .style("pointer-events", "none");
+
+  badges.append("circle")
+    .attr("class", "badge-bg")
+    .attr("r", b => b.radius)
+    .attr("fill", b => smaPlatformOf(b.data.mainPlatform).color)
+    .attr("stroke", "#fff").attr("stroke-width", 2);
+
+  badges.each(function(b) {
+    const meta = smaPlatformOf(b.data.mainPlatform);
+    const r = b.radius;
+    const sel = d3.select(this);
+    const logoUrl = smaLogoUrl(meta, b.data.mainPlatform);
+    if (logoUrl) {
+      sel.append("image")
+        .attr("class", "badge-logo")
+        .attr("xlink:href", logoUrl).attr("href", logoUrl)
+        .attr("x", -r * 0.7).attr("y", -r * 0.7)
+        .attr("width", r * 1.4).attr("height", r * 1.4);
+    } else {
+      sel.append("text")
+        .attr("class", "badge-letter")
+        .attr("text-anchor", "middle").attr("dy", "0.32em")
+        .attr("font-size", `${r * 0.95}px`).attr("font-weight", 800).attr("fill", "#fff")
+        .text(meta.letter);
+    }
+  });
+
+  // ── F. Zoom (counter-scale badges so they don't grow with the map) ──────
+  svg.call(d3.zoom()
+    .scaleExtent([1, 8])
+    .translateExtent([[-100, -100], [width + 100, height + 100]])
+    .on("zoom", event => {
+      const k = event.transform.k;
+      zoomG.attr("transform", event.transform);
+      zoomG.selectAll("circle.badge-bg")
+        .attr("r", b => b.radius / k).attr("stroke-width", 2 / k);
+      zoomG.selectAll("image.badge-logo")
+        .attr("x", b => -b.radius * 0.7 / k).attr("y", b => -b.radius * 0.7 / k)
+        .attr("width", b => b.radius * 1.4 / k).attr("height", b => b.radius * 1.4 / k);
+      zoomG.selectAll("text.badge-letter")
+        .attr("font-size", b => `${b.radius * 0.95 / k}px`);
+      zoomG.selectAll(".country").attr("stroke-width", 0.5 / k);
+    })
+  );
+
+  // ── G. Legend ────────────────────────────────────────────────────────────
+  const legend = d3.select("#addiction-legend");
+  legend.html("");
+
+  const platformsInData = Array.from(new Set(
+    addictionData.map(d => d.Most_Used_Platform?.trim()).filter(Boolean)
+  )).sort();
+
+  buildPlatformLegend(platformsInData);
+  drawScaleLegend();
+
+  function buildPlatformLegend(platforms) {
+    const section = legend.append("div").style("margin-bottom", "16px");
+    section.append("p")
+      .style("margin", "0 0 8px").style("font-size", "0.88rem").style("color", "#333")
+      .html("<strong>Platform</strong> <span style='font-weight:400;color:#888;font-size:0.78rem;'>click to show percentage</span>");
+
+    const grid = section.append("div")
+      .style("display", "grid")
+      .style("grid-template-columns", "repeat(auto-fill, minmax(150px, 1fr))")
+      .style("gap", "6px");
+
+    const items = grid.selectAll("div.platform-legend-item")
+      .data(platforms)
+      .join("div")
+      .attr("class", "platform-legend-item")
+      .style("display", "flex").style("align-items", "center").style("gap", "8px")
+      .style("padding", "4px 8px").style("border-radius", "6px")
+      .style("cursor", "pointer").style("user-select", "none")
+      .style("font-size", "0.82rem")
+      .style("transition", "background 0.15s")
+      .on("mouseover", function(_, p) {
+        if (view.platform !== p) d3.select(this).style("background", "#eef1f6");
+      })
+      .on("mouseout", function(_, p) {
+        d3.select(this).style("background", view.platform === p ? "#dee5f1" : "");
+      })
+      .on("click", (_, p) => togglePlatform(p, items));
+
+    items.each(function(p) {
+      const meta = smaPlatformOf(p);
+      const swatch = d3.select(this).append("span")
+        .style("width", "26px").style("height", "26px")
+        .style("border-radius", "50%").style("background", meta.color)
+        .style("border", "2px solid #fff").style("box-shadow", "0 1px 3px rgba(0,0,0,0.18)")
+        .style("display", "flex").style("align-items", "center").style("justify-content", "center")
+        .style("flex-shrink", 0);
+      const logoUrl = smaLogoUrl(meta, p);
+      if (logoUrl) {
+        swatch.append("img").attr("src", logoUrl).attr("alt", p)
+          .style("width", "15px").style("height", "15px");
+      } else {
+        swatch.style("color", "#fff").style("font-weight", 800).style("font-size", "13px")
+          .text(meta.letter);
+      }
+      d3.select(this).append("span").text(p);
+    });
+  }
+
+  function togglePlatform(p, items) {
+    const next = view.platform === p ? null : p;
+
+    if (next) {
+      const percentages = new Map(
+        Array.from(countries, ([name, data]) => {
+          const count = data.allPlatforms.find(([pp]) => pp === next)?.[1] || 0;
+          return [name, (count / data.studentCount) * 100];
+        })
+      );
+      const maxPct = d3.max(percentages.values()) || 100;
+      view = {
+        mode: "platform",
+        platform: next,
+        scale: d3.scaleLinear().domain([0, maxPct]).range(["#ffffff", smaPlatformOf(next).color]),
+        percentages
+      };
+
+      countryPaths.transition().duration(220).attr("fill", fillFor);
+      badges.transition().duration(220).style("opacity", 0);
+
+      g.selectAll("text.percentage-label")
+        .data(badgeData)
+        .join("text")
+        .attr("class", "percentage-label")
+        .attr("transform", b => `translate(${b.centroid[0]},${b.centroid[1]})`)
+        .attr("text-anchor", "middle").attr("dy", "0.32em")
+        .attr("font-size", "12px").attr("font-weight", 800).attr("fill", "#333")
+        .attr("pointer-events", "none")
+        .text(b => {
+          const pct = percentages.get(b.csvName) ?? 0;
+          return pct > 0 ? `${pct.toFixed(0)}%` : "—";
+        });
+    } else {
+      view = { mode: "usage", platform: null, scale: null, percentages: null };
+      countryPaths.transition().duration(220).attr("fill", fillFor);
+      badges.transition().duration(220).style("opacity", 1);
+      g.selectAll("text.percentage-label").remove();
+    }
+
+    items.style("background", d => d === view.platform ? "#dee5f1" : "");
+    drawScaleLegend();
+  }
+
+  function drawScaleLegend() {
+    legend.selectAll("div.legend-section").remove();
+    const section = legend.append("div")
+      .attr("class", "legend-section")
+      .style("margin-bottom", "16px");
+
+    if (view.mode === "platform") {
+      section.append("p")
+        .style("margin", "0 0 8px").style("font-size", "0.88rem").style("color", "#333")
+        .html(`<strong>${view.platform} %</strong> <span style='font-weight:400;color:#888;font-size:0.78rem;'>country coverage</span>`);
+      appendScaleRow(section, [0, 25, 50, 75, 100], view.scale, d => `${d}%`);
+    } else {
+      section.append("p")
+        .style("margin", "0 0 8px").style("font-size", "0.88rem").style("color", "#333")
+        .html("<strong>Avg Daily Usage (h)</strong> <span style='font-weight:400;color:#888;font-size:0.78rem;'>country fill</span>");
+      const row = appendScaleRow(section, [3, 4, 5, 6, 7], usageColor, d => `${d} h`);
+      row.append("div").style("display", "flex").style("align-items", "center").style("gap", "6px")
+        .html(`<div style="width:22px;height:14px;background-image:repeating-linear-gradient(45deg,#ececec 0,#ececec 3px,#c4c4c4 3px,#c4c4c4 4px);border:1px solid #ccc;"></div>
+               <span style="font-size:0.82rem;color:#666;">n &lt; 5</span>`);
+    }
+  }
+
+  function appendScaleRow(parent, values, scale, format) {
+    const row = parent.append("div")
+      .style("display", "flex").style("gap", "14px")
+      .style("flex-wrap", "wrap").style("align-items", "center");
+    values.forEach(v => {
+      row.append("div")
+        .style("display", "flex").style("align-items", "center").style("gap", "6px")
+        .html(`<div style="width:22px;height:14px;background-color:${scale(v)};border:1px solid #ccc;"></div>
+               <span style="font-size:0.82rem;">${format(v)}</span>`);
+    });
+    return row;
+  }
+}
+
+// ─────────────────────────────────────────────
+// SECTION 10: PLATFORM PROFILE RADAR
+// ─────────────────────────────────────────────
+function drawPlatformRadar(addictionData) {
+  const container = document.getElementById("platform-radar-chart");
+  if (!container) return;
+
+  // Each metric reads one field from a row. `inverted: true` flips the axis so
+  // "higher = worse" stays consistent across the radar (sleep, where more is
+  // better, gets inverted so its outer ring still means "bad outcome").
+  const metrics = [
+    { label: "Daily Usage Hours",                read: r => +r.Avg_Daily_Usage_Hours,                                            max: 10 },
+    { label: "Addiction Score",                  read: r => +r.Addicted_Score,                                                   max: 10 },
+    { label: "Mental Health",                    read: r => 10 - +r.Mental_Health_Score,                                         max: 10 },
+    { label: "Conflicts",                        read: r => +r.Conflicts_Over_Social_Media,                                      max: 5  },
+    { label: "Daily Sleep Hours (inverted axis)",read: r => +r.Sleep_Hours_Per_Night,                                            max: 10, inverted: true },
+    { label: "Academic Performance Affected",    read: r => r.Affects_Academic_Performance?.trim() === "Yes" ? 100 : 0,          max: 100 }
+  ];
+
+  // Aggregate per platform, dropping anything with fewer than 5 students
+  const MIN_SAMPLE = 5;
+  const profiles = Array.from(d3.group(addictionData, d => d.Most_Used_Platform?.trim()))
+    .filter(([platform, rows]) => platform && rows.length >= MIN_SAMPLE)
+    .map(([platform, rows]) => ({
+      platform,
+      n: rows.length,
+      values: metrics.map(m => d3.mean(rows, m.read))
+    }))
+    .sort((a, b) => b.n - a.n);
+
+  // Layout — keep enough margin around the circle so the "0 – N" range
+  // subtitle under each axis label sits inside the SVG, not clipped below it.
+  const width  = Math.min(720, container.clientWidth || 720);
+  const height = 540;
+  const radius = (Math.min(width, height) - 120) / 2;
+  const cx     = width / 2;
+  const cy     = height / 2 + 10;
+
+  d3.select("#platform-radar-chart").selectAll("*").remove();
+  const svg = d3.select("#platform-radar-chart").append("svg")
+    .attr("width", width).attr("height", height);
+  const g = svg.append("g").attr("transform", `translate(${cx},${cy})`);
+
+  const angle = i => -Math.PI / 2 + i * (2 * Math.PI / metrics.length);
+
+  // Project a profile's raw values into [x, y] points on the radar
+  const project = profile => profile.values.map((v, i) => {
+    let norm = Math.min(1, v / metrics[i].max);
+    if (metrics[i].inverted) norm = 1 - norm;
+    return [Math.cos(angle(i)) * radius * norm, Math.sin(angle(i)) * radius * norm];
+  });
+
+  // Concentric guide polygons
+  for (let lvl = 1; lvl <= 5; lvl++) {
+    const r = (radius * lvl) / 5;
+    const pts = metrics.map((_, i) => `${Math.cos(angle(i)) * r},${Math.sin(angle(i)) * r}`).join(" ");
+    g.append("polygon")
+      .attr("points", pts)
+      .attr("fill", "none").attr("stroke", "#dde2eb").attr("stroke-width", 1);
+  }
+
+  // Axis spokes and labels
+  metrics.forEach((m, i) => {
+    const a = angle(i);
+    g.append("line")
+      .attr("x2", Math.cos(a) * radius).attr("y2", Math.sin(a) * radius)
+      .attr("stroke", "#bcc4d1");
+    const lx = Math.cos(a) * (radius + 18);
+    const ly = Math.sin(a) * (radius + 18);
+    g.append("text").attr("x", lx).attr("y", ly)
+      .attr("text-anchor", "middle").attr("dy", "0.35em")
+      .style("font-size", "12px").style("font-weight", "600").style("fill", "#1a1a2e")
+      .text(m.label);
+    g.append("text").attr("x", lx).attr("y", ly + 17)
+      .attr("text-anchor", "middle")
+      .style("font-size", "10px").style("fill", "#888")
+      .text(`0 – ${m.max}`);
+  });
+
+  const visible = new Set(["TikTok", "Instagram", "Facebook"]);
+  const tooltip = d3.select("body").selectAll(".radar-tooltip").data([1])
+    .join("div").attr("class", "radar-tooltip");
+
+  function render() {
+    g.selectAll(".radar-poly, .radar-point").remove();
+    profiles.forEach(profile => {
+      if (!visible.has(profile.platform)) return;
+      const { color } = smaPlatformOf(profile.platform);
+      const pts = project(profile);
+
+      g.append("polygon")
+        .attr("class", "radar-poly")
+        .attr("points", pts.map(p => p.join(",")).join(" "))
+        .attr("fill", color).attr("fill-opacity", 0.18)
+        .attr("stroke", color).attr("stroke-width", 2.2);
+
+      g.selectAll(null)
+        .data(pts.map((p, i) => ({ p, metric: metrics[i], value: profile.values[i] })))
+        .enter().append("circle")
+        .attr("class", "radar-point")
+        .attr("cx", d => d.p[0]).attr("cy", d => d.p[1])
+        .attr("r", 4)
+        .attr("fill", color).attr("stroke", "#fff").attr("stroke-width", 1.5)
+        .on("mouseover", (event, d) => {
+          tooltip.style("opacity", 1)
+            .html(`<strong>${profile.platform}</strong><br>${d.metric.label}: ${d.value.toFixed(2)}<br>n = ${profile.n}`);
+          moveTooltip(event);
+        })
+        .on("mousemove", moveTooltip)
+        .on("mouseout", () => tooltip.style("opacity", 0));
+    });
+  }
+
+  function moveTooltip(event) {
+    tooltip.style("left", (event.pageX + 12) + "px")
+           .style("top",  (event.pageY - 32) + "px");
+  }
+
+  render();
+
+  // Toggle pills below the chart
+  const toggles = d3.select("#platform-radar-toggles");
+  toggles.html("");
+  toggles.selectAll("button.radar-pill")
+    .data(profiles)
+    .join("button")
+    .attr("class", "radar-pill")
+    .attr("data-platform", d => d.platform)
+    .style("--pill-color", d => smaPlatformOf(d.platform).color)
+    .classed("active", d => visible.has(d.platform))
+    .on("click", function(_, d) {
+      visible.has(d.platform) ? visible.delete(d.platform) : visible.add(d.platform);
+      d3.select(this).classed("active", visible.has(d.platform));
+      render();
+    })
+    .each(function(d) {
+      const sel = d3.select(this);
+      const meta = smaPlatformOf(d.platform);
+      const logoUrl = smaLogoUrl(meta, d.platform);
+      if (logoUrl) {
+        sel.append("img").attr("src", logoUrl).style("width", "14px").style("height", "14px");
+      }
+      sel.append("span").text(`${d.platform} (n=${d.n})`);
+    });
+}
+
+// ─────────────────────────────────────────────
+// SECTION 11: AGE TRAJECTORY
+// ─────────────────────────────────────────────
+function drawAcademicTrajectory(addictionData) {
+  const container = document.getElementById("academic-trajectory-chart");
+  if (!container) return;
+
+  // Aggregator returns a per-age value. For most metrics it's a mean of a field;
+  // for academic impact it's the share of "Yes" responses.
+  const meanOf = field => rows => d3.mean(rows, r => +r[field]) || 0;
+  const percentAffected = rows =>
+    rows.length ? rows.filter(r => r.Affects_Academic_Performance?.trim() === "Yes").length / rows.length * 100 : 0;
+
+  const metrics = [
+    { label: "Addiction Score (0–9)",                 aggregate: meanOf("Addicted_Score") },
+    { label: "Daily Usage (h)",                       aggregate: meanOf("Avg_Daily_Usage_Hours") },
+    { label: "Mental Health Score (0–9)",             aggregate: meanOf("Mental_Health_Score") },
+    { label: "Conflicts (0–5)",                       aggregate: meanOf("Conflicts_Over_Social_Media") },
+    { label: "Daily Sleep Hours (h)",                 aggregate: meanOf("Sleep_Hours_Per_Night") },
+    { label: "Academic Performance Affected (%)",     aggregate: percentAffected }
+  ];
+
+  const width      = container.clientWidth || 920;
+  const cols       = metrics.length;
+  const cellW      = width / cols;
+  const cellH      = 360;
+  const margin     = { top: 20, right: 12, bottom: 50, left: 45 };
+  const innerW     = cellW - margin.left - margin.right;
+  const innerH    = cellH - margin.top - margin.bottom;
+  const totalH    = cellH + 40;
+
+  d3.select("#academic-trajectory-chart").selectAll("*").remove();
+  const svg = d3.select("#academic-trajectory-chart").append("svg")
+    .attr("width", width).attr("height", totalH)
+    .style("font-family", "Segoe UI, Arial, sans-serif");
+
+  // Group students by age once; every chart reuses the same grouping.
+  const byAge = d3.group(
+    addictionData.filter(d => d.Age).map(d => ({ ...d, age: +d.Age })),
+    d => d.age
+  );
+  const ages = Array.from(byAge.keys()).sort((a, b) => a - b);
+
+  const tooltip = d3.select("body").selectAll(".trajectory-tooltip").data([1])
+    .join("div").attr("class", "trajectory-tooltip dot-tooltip");
+
+  metrics.forEach((metric, i) => {
+    const g = svg.append("g")
+      .attr("transform", `translate(${i * cellW + margin.left}, ${margin.top})`);
+
+    const points = ages.map(age => {
+      const rows = byAge.get(age);
+      return { age, value: metric.aggregate(rows), n: rows.length };
+    });
+
+    const [vMin, vMax] = d3.extent(points, d => d.value);
+    const y = d3.scaleLinear().domain([vMin * 0.85, vMax * 1.15]).range([innerH, 0]);
+    const x = d3.scaleLinear().domain([d3.min(ages) - 0.5, d3.max(ages) + 0.5]).range([0, innerW]);
+    const r = d3.scaleSqrt().domain([0, d3.max(points, d => d.n)]).range([3, 12]);
+
+    g.append("rect")
+      .attr("width", innerW).attr("height", innerH)
+      .attr("fill", "#f8f9fb").attr("opacity", 0.5);
+
+    const line = d3.line().x(d => x(d.age)).y(d => y(d.value));
+    g.append("path")
+      .attr("d", line(points))
+      .attr("fill", "none")
+      .attr("stroke", "#4e79a7").attr("stroke-width", 2.5).attr("opacity", 0.8);
+
+    g.append("g")
+      .selectAll("circle")
+      .data(points.filter(d => d.n > 0))
+      .join("circle")
+      .attr("cx", d => x(d.age))
+      .attr("cy", d => y(d.value))
+      .attr("r",  d => r(d.n))
+      .attr("fill", "#4e79a7")
+      .attr("stroke", "#fff").attr("stroke-width", 1.5)
+      .style("opacity", 0.85)
+      .style("cursor", "pointer")
+      .on("mouseover", (event, d) => {
+        tooltip.style("opacity", 1)
+          .html(`<strong>${metric.label}</strong><br>Age: ${d.age}<br>Value: ${d.value.toFixed(2)}<br>n: ${d.n}`);
+        moveTooltip(event);
+      })
+      .on("mousemove", moveTooltip)
+      .on("mouseout", () => tooltip.style("opacity", 0));
+
+    g.append("g").call(d3.axisLeft(y).ticks(3).tickSize(0))
+      .selectAll("text").style("font-size", "9px");
+    g.append("g").attr("transform", `translate(0,${innerH})`)
+      .call(d3.axisBottom(x).tickValues(ages).tickSize(0).tickFormat(d3.format("d")))
+      .selectAll("text").style("font-size", "9px");
+
+    g.append("text")
+      .attr("x", innerW / 2).attr("y", -5).attr("text-anchor", "middle")
+      .style("font-size", "12px").style("font-weight", "700").style("fill", "#1a1a2e")
+      .text(metric.label);
+  });
+
+  function moveTooltip(event) {
+    tooltip.style("left", (event.pageX + 12) + "px")
+           .style("top",  (event.pageY - 32) + "px");
+  }
+
+  svg.append("g")
+    .attr("transform", `translate(40, ${totalH - 20})`)
+    .append("text")
+    .style("font-size", "10px").style("fill", "#888")
+    .text("Dot size = sample count at age");
+}
+
+function drawHealthHeatmap(addictionData) {
+  const container = document.getElementById("health-heatmap-chart");
+  if (!container) return;
+
+  const sleepBins = [
+    ["Short Sleep",    "< 6 h",   s => s < 6],
+    ["Adequate Sleep", "6 – 8 h", s => s >= 6 && s < 8],
+    ["Long Sleep",     "≥ 8 h",   s => s >= 8]
+  ].map(([label, range, test]) => ({ label, range, test }));
+
+  const usageBins = [
+    ["Light Usage",    "< 3 h",   u => u < 3],
+    ["Moderate Usage", "3 – 6 h", u => u >= 3 && u < 6],
+    ["Heavy Usage",    "≥ 6 h",   u => u >= 6]
+  ].map(([label, range, test]) => ({ label, range, test }));
+
+  const summarize = rows => {
+    if (!rows.length) return { n: 0, addiction: null, mental: null, affected: null };
+    const yes = rows.filter(r => r.Affects_Academic_Performance?.trim() === "Yes").length;
+    return {
+      n: rows.length,
+      addiction: d3.mean(rows, r => +r.Addicted_Score),
+      mental:    d3.mean(rows, r => +r.Mental_Health_Score),
+      affected:  (yes / rows.length) * 100
+    };
+  };
+
+  const cells = sleepBins.flatMap((sb, row) =>
+    usageBins.map((ub, col) => {
+      const rows = addictionData.filter(d => {
+        const s = +d.Sleep_Hours_Per_Night, u = +d.Avg_Daily_Usage_Hours;
+        return Number.isFinite(s) && Number.isFinite(u) && sb.test(s) && ub.test(u);
+      });
+      return { row, col, sleep: sb, usage: ub, ...summarize(rows) };
+    })
+  );
+
+  const width = Math.min(900, container.clientWidth || 900);
+  const rowLabelW = 110;
+  // headerH covers both the bold category name and the smaller "< 3 h" range
+  // line below it; cells start at y = headerH so both must fit above that.
+  const headerH = 62;
+  const legendH = 80;
+  const cellSize = (width - rowLabelW - 20) / 3;
+  const height = headerH + cellSize * 3 + legendH + 20;
+
+  d3.select("#health-heatmap-chart").selectAll("*").remove();
+  const svg = d3.select("#health-heatmap-chart").append("svg")
+    .attr("width", width).attr("height", height)
+    .style("font-family", "Segoe UI, Arial, sans-serif");
+
+  const addictionValues = cells.filter(c => c.n > 0).map(c => c.addiction);
+  const [aMin, aMax] = d3.extent(addictionValues);
+  const color = d3.scaleLinear()
+    .domain([aMin, (aMin + aMax) / 2, aMax])
+    .range(["#f7f9c6", "#f5a83a", "#b32424"]);
+
+  // Pick readable text colour given the cell background luminance.
+  const textOn = bg => {
+    const c = d3.color(bg);
+    const luma = (0.299 * c.r + 0.587 * c.g + 0.114 * c.b);
+    return luma > 150 ? "#1a1a2e" : "#ffffff";
+  };
+
+  const tooltip = d3.select("body").selectAll(".heatmap-tooltip").data([1])
+    .join("div").attr("class", "heatmap-tooltip");
+
+  const showTooltip = (event, d) => {
+    const body = d.n === 0
+      ? `<em style="color:#aaa;">No students in this combination</em>`
+      : `<span style="color:#aaa;">Sleep ${d.sleep.range} · Usage ${d.usage.range}</span><br><br>
+         <strong>Addiction:</strong> ${d.addiction.toFixed(2)}<br>
+         <strong>Mental Health:</strong> ${d.mental.toFixed(2)}<br>
+         <strong>Academic Affected:</strong> ${d.affected.toFixed(0)}%<br>
+         <span style="color:#aaa;">n = ${d.n}</span>`;
+    tooltip.style("opacity", 1)
+      .html(`<strong>${d.sleep.label} × ${d.usage.label}</strong><br>${body}`)
+      .style("left", (event.pageX + 14) + "px")
+      .style("top",  (event.pageY - 10) + "px");
+  };
+
+  // Column headers — label sits at the top of the header band, range subtitle
+  // 14 px below it; both finish above the cells (which start at y = headerH).
+  const colHeaders = svg.append("g").attr("transform", `translate(${rowLabelW}, 0)`);
+  usageBins.forEach((ub, j) => {
+    const g = colHeaders.append("g")
+      .attr("transform", `translate(${j * cellSize + cellSize / 2}, ${headerH - 30})`);
+    g.append("text").attr("text-anchor", "middle")
+      .style("font-size", "13px").style("font-weight", "700").style("fill", "#1a1a2e")
+      .text(ub.label);
+    g.append("text").attr("text-anchor", "middle").attr("y", 16)
+      .style("font-size", "11px").style("fill", "#888")
+      .text(ub.range);
+  });
+
+  // Row labels
+  const rowHeaders = svg.append("g").attr("transform", `translate(0, ${headerH})`);
+  sleepBins.forEach((sb, i) => {
+    const g = rowHeaders.append("g")
+      .attr("transform", `translate(${rowLabelW - 12}, ${i * cellSize + cellSize / 2})`);
+    g.append("text").attr("text-anchor", "end").attr("dy", "-0.2em")
+      .style("font-size", "13px").style("font-weight", "700").style("fill", "#1a1a2e")
+      .text(sb.label);
+    g.append("text").attr("text-anchor", "end").attr("dy", "1.1em")
+      .style("font-size", "11px").style("fill", "#888")
+      .text(sb.range);
+  });
+
+  // Cells
+  const grid = svg.append("g").attr("transform", `translate(${rowLabelW}, ${headerH})`);
+  const cellG = grid.selectAll("g.cell")
+    .data(cells)
+    .join("g")
+    .attr("class", "cell")
+    .attr("transform", d => `translate(${d.col * cellSize}, ${d.row * cellSize})`);
+
+  cellG.append("rect")
+    .attr("x", 2).attr("y", 2)
+    .attr("width",  cellSize - 4)
+    .attr("height", cellSize - 4)
+    .attr("rx", 8)
+    .attr("fill",   d => d.n === 0 ? "#f4f4f6" : color(d.addiction))
+    .attr("stroke", d => d.n === 0 ? "#e0e0e6" : "rgba(0,0,0,0.08)")
+    .style("cursor", "pointer")
+    .on("mouseover", function(event, d) {
+      d3.select(this).attr("stroke", "#1a1a2e").attr("stroke-width", 2);
+      showTooltip(event, d);
+    })
+    .on("mousemove", event => {
+      tooltip.style("left", (event.pageX + 14) + "px")
+             .style("top",  (event.pageY - 10) + "px");
+    })
+    .on("mouseout", function(_, d) {
+      d3.select(this)
+        .attr("stroke", d.n === 0 ? "#e0e0e6" : "rgba(0,0,0,0.08)")
+        .attr("stroke-width", 1);
+      tooltip.style("opacity", 0);
+    });
+
+  // Cell contents
+  cellG.each(function(d) {
+    const g = d3.select(this);
+    const cx = cellSize / 2;
+
+    if (d.n === 0) {
+      g.append("text")
+        .attr("x", cx).attr("y", cellSize / 2)
+        .attr("text-anchor", "middle").attr("dy", "0.32em")
+        .style("font-size", "13px").style("fill", "#bbb").style("font-style", "italic")
+        .text("no data");
+      return;
+    }
+
+    const fill = textOn(color(d.addiction));
+
+    const label = (y, text, opts = {}) => g.append("text")
+      .attr("x", cx).attr("y", y)
+      .attr("text-anchor", "middle")
+      .style("font-size", opts.size || "11px")
+      .style("font-weight", opts.weight || "600")
+      .style("fill", fill)
+      .style("opacity", opts.opacity || 1)
+      .text(text);
+
+    label(cellSize * 0.30, "Mental Health", { opacity: 0.85 });
+    label(cellSize * 0.47, d.mental.toFixed(1), { size: "32px", weight: "800" });
+
+    g.append("line")
+      .attr("x1", cx - 30).attr("x2", cx + 30)
+      .attr("y1", cellSize * 0.58).attr("y2", cellSize * 0.58)
+      .attr("stroke", fill).attr("stroke-opacity", 0.3);
+
+    label(cellSize * 0.68, "Academic Affected", { opacity: 0.85 });
+    label(cellSize * 0.82, `${d.affected.toFixed(0)}%`, { size: "20px", weight: "700" });
+
+    g.append("text")
+      .attr("x", cellSize - 10).attr("y", cellSize - 10)
+      .attr("text-anchor", "end")
+      .style("font-size", "10px").style("font-weight", "600")
+      .style("fill", fill).style("opacity", 0.7)
+      .text(`n = ${d.n}`);
+  });
+
+  // Legend
+  const legend = svg.append("g")
+    .attr("transform", `translate(${rowLabelW}, ${headerH + cellSize * 3 + 24})`);
+
+  legend.append("text")
+    .style("font-size", "12px").style("font-weight", "700").style("fill", "#1a1a2e")
+    .text("Cell background = average addiction score");
+
+  const gradId = "heatmap-grad";
+  const stops = d3.range(0, 11).map(i => i / 10);
+  svg.append("defs").append("linearGradient").attr("id", gradId)
+    .attr("x1", "0%").attr("x2", "100%")
+    .selectAll("stop")
+    .data(stops)
+    .join("stop")
+    .attr("offset",     t => `${t * 100}%`)
+    .attr("stop-color", t => color(aMin + (aMax - aMin) * t));
+
+  legend.append("rect")
+    .attr("y", 10).attr("width", 260).attr("height", 14)
+    .attr("rx", 3)
+    .attr("fill", `url(#${gradId})`)
+    .attr("stroke", "rgba(0,0,0,0.1)");
+
+  legend.append("text").attr("y", 38)
+    .style("font-size", "11px").style("fill", "#666")
+    .text(`${aMin.toFixed(1)} (healthy)`);
+  legend.append("text").attr("x", 260).attr("y", 38).attr("text-anchor", "end")
+    .style("font-size", "11px").style("fill", "#666")
+    .text(`${aMax.toFixed(1)} (high addiction)`);
+
+  const guide = svg.append("g")
+    .attr("transform", `translate(${rowLabelW + 320}, ${headerH + cellSize * 3 + 24})`);
+  guide.append("text")
+    .style("font-size", "12px").style("font-weight", "700").style("fill", "#1a1a2e")
+    .text("Inside each cell:");
+  [
+    "• Large number — Mental Health Score (higher = better)",
+    "• Bottom percentage — students reporting academic impact",
+    "• Corner n = sample size  ·  Hover for full detail"
+  ].forEach((line, i) => {
+    guide.append("text").attr("y", 18 + i * 15)
+      .style("font-size", "11px")
+      .style("fill", i === 2 ? "#888" : "#444")
+      .text(line);
+  });
+}
+
+
+// ─────────────────────────────────────────────
+// LOADER: SOCIAL MEDIA ADDICTION CHARTS
+// ─────────────────────────────────────────────
+const initSocialMediaCharts = () => {
+  if (typeof topojson === 'undefined' || typeof d3.sankey !== 'function') {
+    setTimeout(initSocialMediaCharts, 100);
+    return;
+  }
+
+  Promise.all([
+    d3.csv("data/social_media_addiction.csv"),
+    d3.json("data/countries-110m.json")
+  ]).then(([addictionData, topoData]) => {
+    drawSmaDemographicFlow(addictionData);
+    drawWorldMap(addictionData, topoData);
+    drawPlatformRadar(addictionData);
+    drawAcademicTrajectory(addictionData);
+    drawHealthHeatmap(addictionData);
+  }).catch(err => {
+    console.error("Error loading social media charts:", err);
+    const section = document.getElementById("section-global-addiction");
+    if (section) {
+      section.innerHTML = '<p style="color: #999; padding: 20px;">Visualizations unavailable: ' + (err.message || "load error") + '</p>';
+    }
+  });
+};
+
+setTimeout(initSocialMediaCharts, 500);
