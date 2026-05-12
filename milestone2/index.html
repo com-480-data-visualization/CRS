@@ -4,11 +4,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teen Health Profile</title>
-  <link rel="stylesheet" href="style.css?v=20260417d">
+  <link rel="stylesheet" href="style.css?v=20260512b">
   <script src="d3.v7.min.js?v=20260417c" defer></script>
-  <script src="main.js?v=20260417d" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson@3" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0" defer></script>
+  <script src="main.js?v=20260512b" defer></script>
 </head>
 <body>
+
+<!-- Reusable SVG filter: traces the source alpha with a black outline -->
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <filter id="snapchat-outline" x="-15%" y="-15%" width="130%" height="130%">
+      <feMorphology in="SourceAlpha" operator="dilate" radius="1" result="dilated"/>
+      <feFlood flood-color="#000" result="black"/>
+      <feComposite in="black" in2="dilated" operator="in" result="outline"/>
+      <feMerge>
+        <feMergeNode in="outline"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+</svg>
 
 <header>
   <p class="eyebrow">2023 CDC Youth Risk Behavior Survey</p>
@@ -163,5 +180,97 @@
   <div id="phone-corr-summary" class="phone-summary-strip"></div>
   <div id="heatmap-chart"></div>
 </section>
+
+<!-- DATASET TRANSITION -->
+<section id="section-sma-intro">
+  <p class="section-kicker">Switching Datasets</p>
+  <h2>A Second Lens: Zoom on Social Media Habits</h2>
+  <p class="section-desc">From here, the analysis switches to a smaller, globally-sourced survey: 705 university-age students from 110 countries answering a focused questionnaire on social-media habits, sleep, mental health, and academic impact. The chart below shows how that cohort is composed : pick any two of gender, age, academic level, or relationship status to see how the sample splits between them. The sample consists mainly of undergraduate women (19-20) and graduate men (21-22), but this composition does not compromise the analysis.</p>
+  <div class="orientation-layout">
+    <aside class="survey-passport">
+      <div class="passport-label">Dataset Passport</div>
+      <div class="passport-title">Students' Social Media Addiction</div>
+      <div class="passport-metrics">
+        <div class="passport-metric">
+          <span class="passport-value">705</span>
+          <span class="passport-caption">student rows</span>
+        </div>
+        <div class="passport-metric">
+          <span class="passport-value">13</span>
+          <span class="passport-caption">variables</span>
+        </div>
+        <div class="passport-metric">
+          <span class="passport-value">110</span>
+          <span class="passport-caption">countries represented</span>
+        </div>
+        <div class="passport-metric">
+          <span class="passport-value">12</span>
+          <span class="passport-caption">social media platforms tracked</span>
+        </div>
+      </div>
+      <p class="passport-note">An unweighted convenience sample — each response counts equally — covering daily usage, sleep, mental health, conflicts, and self-reported academic impact.</p>
+    </aside>
+    <div class="association-panel">
+      <div class="association-toolbar">
+        <div class="controls association-controls">
+          <label>Connect:</label>
+          <select id="sma-flow-left" aria-label="Left demographic dimension"></select>
+          <span class="flow-arrow">to</span>
+          <select id="sma-flow-right" aria-label="Right demographic dimension"></select>
+          <button id="sma-flow-swap" class="flow-swap" type="button">Swap</button>
+        </div>
+      </div>
+      <div id="sma-flow-chart">
+        <div class="loading-panel">Loading demographic composition...</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 9: GLOBAL SOCIAL MEDIA EXPOSURE -->
+<section id="section-global-addiction">
+  <p class="section-kicker">9. Global Perspective</p>
+  <h2>Map of the most used social media platform around the globe and average time spent online</h2>
+  <p class="section-desc">Each country is shaded by the average hours its students spend on social media every day, with the most-used platform tagged on top. Hatched countries hold too few respondents to be reliable. Click any platform in the legend to see where it's usage percentage across countries.</p>
+  <div id="world-map-container" style="width: 100%; height: 700px; position: relative;">
+    <svg id="world-map"></svg>
+  </div>
+  <div id="addiction-legend" class="addiction-legend"></div>
+</section>
+
+<!-- SECTION 10: PLATFORM PROFILE RADAR -->
+<section id="section-platform-radar">
+  <p class="section-kicker">10. Platform Profile</p>
+  <h2>Which Platforms Look Most Problematic?</h2>
+  <p class="section-desc">Different platforms produce different user profiles. A typical TikTok user looks nothing like a typical LinkedIn user once you place them side by side on the same six metrics. The sleep axis is inverted so that, as with the others, distance from the centre always means worse outcomes. Toggle a pill below to add or remove a platform from the comparison.</p>
+  <div id="platform-radar-toggles" class="platform-radar-toggles"></div>
+  <div id="platform-radar-chart"></div>
+  <p class="section-takeaway">
+    The shapes carry the message. TikTok and Instagram users stretch outward on nearly every axis at once : high usage, high addiction scores, more conflicts, more sleep deprivation, and a clear majority reporting academic impact. LinkedIn traces a much smaller figure close to the centre. We can't say from this dataset whether the platforms cause those differences or whether they simply attract different kinds of users, but the contrasts hold across six independent metrics, which is harder to explain away as noise. Short-form video platforms tend to have a more detrimental effect on young adults than messaging platforms. WhatsApp is an exception, though its users likely engage with other platforms as well, which may explain this discrepancy.
+  </p>
+</section>
+
+<!-- SECTION 11: AGE TRAJECTORY -->
+<section id="section-academic-trajectory">
+  <p class="section-kicker">11. Age Trajectory</p>
+  <h2>How Do Health Patterns Shift Across Ages?</h2>
+  <p class="section-desc">Six indicators tracked age by age. Dot size shows how many students sit behind each point — small dots mean a thin sample.</p>
+  <div id="academic-trajectory-chart"></div>
+  <p class="section-takeaway">
+    The dots are largest between ages 19-22 because that's where most of the sample sits, so we trust those points the most; the thinner ages at either end should be read with more caution. Still, the pattern is consistent enough across both the well-sampled middle and the sparser edges that it's hard to attribute to noise. One encouraging finding is that older students appear better equipped to manage social media. Markers of problematic use : including addictive tendencies, daily usage, social conflicts, and academic impact, tend to decline with age, while mental health scores and sleep duration show improvement.
+  </p>
+</section>
+
+<!-- SECTION 12: HEALTH HEATMAP -->
+<section id="section-health-heatmap">
+  <p class="section-kicker">12. Health Matrix</p>
+  <h2>How Do Sleep and Usage Combine to Predict Wellbeing?</h2>
+  <p class="section-desc">Sleep and usage are not independent risks; they reinforce one another. The matrix crosses three sleep categories with three usage categories. Cell colour reflects the average addiction score, the large number is the mental health score, and the percentage below is the share of students whose academic performance is affected. Reading along the diagonal tells most of the story.</p>
+  <div id="health-heatmap-chart"></div>
+  <p class="section-takeaway">
+    The matrix sorts the cohort cleanly. At one corner, students who sleep long and use little hold the highest mental-health scores and the lowest addiction in the sample, with academic impact reported in only a fraction of cases. At the opposite corner, the 86 students who pair heavy use with short sleep average an addiction score of 8.5, and every single one of them reports academic impact. The two cells that would push back against the story : light users who don't sleep and heavy users who do, are empty, which itself is a finding: those combinations barely exist in this population. Reading the diagonal, sleep and usage don't merely correlate with worse outcomes one at a time; they compound, and the compounding looks close to linear.
+  </p>
+</section>
+
 </body>
 </html>
